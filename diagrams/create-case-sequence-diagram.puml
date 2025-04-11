@@ -1,0 +1,34 @@
+@startuml Create Case Process - Sequence Diagram
+
+actor User
+boundary "CaseMenu" as CaseMenu
+control "CaseService" as CaseService
+entity "CaseDAO" as CaseDAO
+database "Database" as DB
+
+User -> CaseMenu: Select Add Case Option
+CaseMenu -> CaseMenu: addCase()
+CaseMenu -> ConsoleHelper: readString("Enter case number:")
+ConsoleHelper --> CaseMenu: caseNumber
+CaseMenu -> ConsoleHelper: readString("Enter title:")
+ConsoleHelper --> CaseMenu: title
+CaseMenu -> ConsoleHelper: Display case type options
+CaseMenu -> ConsoleHelper: readInt("Select case type:")
+ConsoleHelper --> CaseMenu: typeSelection
+CaseMenu -> CaseMenu: Convert selection to CaseType
+CaseMenu -> ConsoleHelper: readString("Enter description:")
+ConsoleHelper --> CaseMenu: description
+CaseMenu -> CaseService: createCase(caseNumber, title, type, description)
+CaseService -> CaseDAO: getByCaseNumber(caseNumber)
+CaseDAO -> DB: Query case by number
+DB --> CaseDAO: Optional<Case>
+CaseService -> CaseService: Validate case number uniqueness
+CaseService -> CaseDAO: create(case)
+CaseDAO -> DB: Insert new case
+DB --> CaseDAO: Created case
+CaseDAO --> CaseService: Case
+CaseService --> CaseMenu: Case
+CaseMenu -> ConsoleHelper: displaySuccess("Case created successfully")
+CaseMenu --> User: Show success message
+
+@enduml

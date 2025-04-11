@@ -1,0 +1,29 @@
+@startuml Login Process - Sequence Diagram
+
+actor User
+boundary "AuthMenu" as AuthMenu
+control "MenuManager" as MenuManager
+control "AuthService" as AuthService
+entity "UserDAO" as UserDAO
+database "Database" as DB
+
+User -> AuthMenu: Select Login Option
+AuthMenu -> AuthMenu: handleLogin()
+AuthMenu -> ConsoleHelper: readString("Enter username:")
+ConsoleHelper --> AuthMenu: username
+AuthMenu -> ConsoleHelper: readString("Enter password:")
+ConsoleHelper --> AuthMenu: password
+AuthMenu -> AuthService: login(username, password)
+AuthService -> UserDAO: authenticate(username, password)
+UserDAO -> DB: Query user by username
+DB --> UserDAO: User record
+UserDAO -> UserDAO: Verify password
+UserDAO --> AuthService: Optional<User>
+AuthService -> AuthService: Set currentUser
+AuthService --> AuthMenu: login success/failure
+AuthMenu -> ConsoleHelper: displaySuccess/Error message
+AuthMenu -> MenuManager: navigateToMainMenu()
+MenuManager -> MainMenu: display()
+MainMenu --> User: Show main menu options
+
+@enduml

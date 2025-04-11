@@ -1,0 +1,398 @@
+@startuml Legal Case Tracker - Class Diagram
+
+' Style settings
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classBackgroundColor #f5f5f5
+skinparam classBorderColor #333333
+skinparam packageBackgroundColor #eeeeee
+
+' Packages
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole.model" {
+  abstract class BaseEntity {
+    - id: Long
+    - createdAt: LocalDateTime
+    - updatedAt: LocalDateTime
+    + prePersist(): void
+    + preUpdate(): void
+  }
+  
+  class User extends BaseEntity {
+    - username: String
+    - password: String
+    - email: String
+    - firstName: String
+    - lastName: String
+    - role: UserRole
+  }
+  
+  class Client extends BaseEntity {
+    - firstName: String
+    - lastName: String
+    - email: String
+    - phone: String
+    - address: String
+  }
+  
+  class Case extends BaseEntity {
+    - caseNumber: String
+    - title: String
+    - type: CaseType
+    - description: String
+    - status: CaseStatus
+    - hearings: Collection<Hearing>
+    - documents: Collection<Document>
+    + addClient(client: Client): void
+    + removeClient(client: Client): void
+    + addHearing(hearing: Hearing): void
+    + addDocument(document: Document): void
+  }
+  
+  class Hearing extends BaseEntity {
+    - date: LocalDateTime
+    - location: String
+    - judge: String
+    - notes: String
+    - status: HearingStatus
+    - cse: Case
+  }
+  
+  class Document extends BaseEntity {
+    - title: String
+    - type: DocumentType
+    - content: String
+    - fileLocation: String
+    - cse: Case
+  }
+  
+  class CaseClient {
+    - id: Long
+    - cse: Case
+    - client: Client
+  }
+  
+  enum CaseType {
+    CIVIL
+    CRIMINAL
+    FAMILY
+    CORPORATE
+    PROPERTY
+    OTHER
+  }
+  
+  enum CaseStatus {
+    NEW
+    ACTIVE
+    PENDING
+    CLOSED
+    ARCHIVED
+  }
+  
+  enum HearingStatus {
+    SCHEDULED
+    COMPLETED
+    POSTPONED
+    CANCELLED
+  }
+  
+  enum DocumentType {
+    CONTRACT
+    COURT_FILING
+    EVIDENCE
+    CORRESPONDENCE
+    NOTES
+    OTHER
+  }
+  
+  enum UserRole {
+    ADMIN
+    LAWYER
+    ASSISTANT
+    VIEWER
+  }
+  
+  ' Relationships
+  Case "1" *-- "many" Hearing : contains >
+  Case "1" *-- "many" Document : contains >
+  Case "many" -- "many" Client : associated with
+  CaseClient -- Case
+  CaseClient -- Client
+}
+
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole.dao" {
+  class CaseDAO {
+    - caseDao: Dao<Case, Long>
+    - caseClientDao: Dao<CaseClient, Long>
+    + create(case: Case): Case
+    + getById(id: Long): Optional<Case>
+    + getByCaseNumber(caseNumber: String): Optional<Case>
+    + getAll(): List<Case>
+    + getByStatus(status: CaseStatus): List<Case>
+    + searchByTitle(title: String): List<Case>
+    + update(case: Case): void
+    + deleteById(id: Long): void
+    + addClientToCase(case: Case, client: Client): void
+    + removeClientFromCase(case: Case, client: Client): void
+    + getClientsForCase(caseId: Long): List<Client>
+    + getCasesForClient(clientId: Long): List<Case>
+  }
+  
+  class ClientDAO {
+    - clientDao: Dao<Client, Long>
+    + create(client: Client): Client
+    + getById(id: Long): Optional<Client>
+    + getAll(): List<Client>
+    + searchByName(name: String): List<Client>
+    + update(client: Client): void
+    + deleteById(id: Long): void
+  }
+  
+  class UserDAO {
+    - userDao: Dao<User, Long>
+    + create(user: User): User
+    + getById(id: Long): Optional<User>
+    + getByUsername(username: String): Optional<User>
+    + getAll(): List<User>
+    + update(user: User): void
+    + deleteById(id: Long): void
+    + authenticate(username: String, password: String): Optional<User>
+  }
+  
+  class HearingDAO {
+    - hearingDao: Dao<Hearing, Long>
+    + create(hearing: Hearing): Hearing
+    + getById(id: Long): Optional<Hearing>
+    + getAll(): List<Hearing>
+    + getByCase(caseId: Long): List<Hearing>
+    + getUpcoming(): List<Hearing>
+    + update(hearing: Hearing): void
+    + deleteById(id: Long): void
+  }
+  
+  class DocumentDAO {
+    - documentDao: Dao<Document, Long>
+    + create(document: Document): Document
+    + getById(id: Long): Optional<Document>
+    + getAll(): List<Document>
+    + getByCase(caseId: Long): List<Document>
+    + getByType(type: DocumentType): List<Document>
+    + update(document: Document): void
+    + deleteById(id: Long): void
+  }
+}
+
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole.service" {
+  class AuthService {
+    - userDAO: UserDAO
+    - currentUser: User
+    + login(username: String, password: String): boolean
+    + register(username: String, password: String, email: String, firstName: String, lastName: String, role: UserRole): User
+    + logout(): void
+    + isLoggedIn(): boolean
+    + getCurrentUser(): Optional<User>
+  }
+  
+  class ClientService {
+    - clientDAO: ClientDAO
+    + createClient(firstName: String, lastName: String, email: String, phone: String, address: String): Client
+    + getClientById(id: Long): Optional<Client>
+    + getAllClients(): List<Client>
+    + searchClientsByName(name: String): List<Client>
+    + updateClient(id: Long, firstName: String, lastName: String, email: String, phone: String, address: String): Client
+    + deleteClient(id: Long): void
+  }
+  
+  class CaseService {
+    - caseDAO: CaseDAO
+    - clientDAO: ClientDAO
+    + createCase(caseNumber: String, title: String, type: CaseType, description: String): Case
+    + getCaseById(id: Long): Optional<Case>
+    + getCaseByCaseNumber(caseNumber: String): Optional<Case>
+    + getAllCases(): List<Case>
+    + getCasesByStatus(status: CaseStatus): List<Case>
+    + searchCasesByTitle(title: String): List<Case>
+    + updateCase(id: Long, caseNumber: String, title: String, type: CaseType, description: String, status: CaseStatus): Case
+    + deleteCase(id: Long): void
+    + addClientToCase(caseId: Long, clientId: Long): void
+    + removeClientFromCase(caseId: Long, clientId: Long): void
+    + getClientsForCase(caseId: Long): List<Client>
+    + getCasesForClient(clientId: Long): List<Case>
+  }
+  
+  class HearingService {
+    - hearingDAO: HearingDAO
+    - caseDAO: CaseDAO
+    + createHearing(caseId: Long, date: LocalDateTime, location: String, judge: String, notes: String): Hearing
+    + getHearingById(id: Long): Optional<Hearing>
+    + getAllHearings(): List<Hearing>
+    + getHearingsByCase(caseId: Long): List<Hearing>
+    + getUpcomingHearings(): List<Hearing>
+    + updateHearing(id: Long, date: LocalDateTime, location: String, judge: String, notes: String, status: HearingStatus): Hearing
+    + deleteHearing(id: Long): void
+  }
+  
+  class DocumentService {
+    - documentDAO: DocumentDAO
+    - caseDAO: CaseDAO
+    + createDocument(caseId: Long, title: String, type: DocumentType, content: String, fileLocation: String): Document
+    + getDocumentById(id: Long): Optional<Document>
+    + getAllDocuments(): List<Document>
+    + getDocumentsByCase(caseId: Long): List<Document>
+    + getDocumentsByType(type: DocumentType): List<Document>
+    + updateDocument(id: Long, title: String, type: DocumentType, content: String, fileLocation: String): Document
+    + deleteDocument(id: Long): void
+  }
+}
+
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole.ui" {
+  class MenuManager {
+    - authService: AuthService
+    - clientService: ClientService
+    - caseService: CaseService
+    - hearingService: HearingService
+    - documentService: DocumentService
+    - authMenu: AuthMenu
+    - mainMenu: MainMenu
+    - clientMenu: ClientMenu
+    - caseMenu: CaseMenu
+    - hearingMenu: HearingMenu
+    - documentMenu: DocumentMenu
+    - running: boolean
+    + start(): void
+    + navigateToMainMenu(): void
+    + navigateToClientMenu(): void
+    + navigateToCaseMenu(): void
+    + navigateToHearingMenu(): void
+    + navigateToDocumentMenu(): void
+    + exit(): void
+  }
+  
+  class ConsoleHelper {
+    - scanner: Scanner
+    + displayMessage(message: String): void
+    + displayError(message: String): void
+    + displayInfo(message: String): void
+    + displaySuccess(message: String): void
+    + displayWarning(message: String): void
+    + displayMenuHeader(header: String): void
+    + displayMenuOption(option: int, description: String): void
+    + displayHorizontalLine(): void
+    + readString(prompt: String): String
+    + readInt(prompt: String): int
+    + readDate(prompt: String): LocalDate
+    + readTime(prompt: String): LocalTime
+    + readDateTime(prompt: String): LocalDateTime
+    + clearScreen(): void
+    + closeScanner(): void
+  }
+}
+
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.menu" {
+  class AuthMenu {
+    - menuManager: MenuManager
+    - authService: AuthService
+    + display(): void
+    - handleLogin(): void
+    - handleRegistration(): void
+  }
+  
+  class MainMenu {
+    - menuManager: MenuManager
+    - authService: AuthService
+    + display(): void
+  }
+  
+  class ClientMenu {
+    - menuManager: MenuManager
+    - clientService: ClientService
+    + display(): void
+    - addClient(): void
+    - viewClient(): void
+    - updateClient(): void
+    - deleteClient(): void
+    - searchClients(): void
+    - listAllClients(): void
+  }
+  
+  class CaseMenu {
+    - menuManager: MenuManager
+    - caseService: CaseService
+    - clientService: ClientService
+    + display(): void
+    - addCase(): void
+    - viewCase(): void
+    - updateCase(): void
+    - deleteCase(): void
+    - searchCases(): void
+    - listAllCases(): void
+    - manageCaseClients(): void
+  }
+  
+  class HearingMenu {
+    - menuManager: MenuManager
+    - hearingService: HearingService
+    - caseService: CaseService
+    + display(): void
+    - addHearing(): void
+    - viewHearing(): void
+    - updateHearing(): void
+    - deleteHearing(): void
+    - listHearingsByCase(): void
+    - listUpcomingHearings(): void
+  }
+  
+  class DocumentMenu {
+    - menuManager: MenuManager
+    - documentService: DocumentService
+    - caseService: CaseService
+    + display(): void
+    - addDocument(): void
+    - viewDocument(): void
+    - updateDocument(): void
+    - deleteDocument(): void
+    - listDocumentsByCase(): void
+    - listDocumentsByType(): void
+  }
+}
+
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole.config" {
+  class DatabaseManager {
+    - DATABASE_URL: String
+    - connectionSource: ConnectionSource
+    + initializeDatabase(): void
+    + getConnectionSource(): ConnectionSource
+    + closeConnection(): void
+  }
+}
+
+class LegalcaseApp {
+  + main(args: String[]): void
+}
+
+' Relationships between packages
+LegalcaseApp --> MenuManager : creates >
+LegalcaseApp --> DatabaseManager : initializes >
+
+MenuManager --> AuthMenu : creates >
+MenuManager --> MainMenu : creates >
+MenuManager --> ClientMenu : creates >
+MenuManager --> CaseMenu : creates >
+MenuManager --> HearingMenu : creates >
+MenuManager --> DocumentMenu : creates >
+
+AuthMenu --> AuthService : uses >
+ClientMenu --> ClientService : uses >
+CaseMenu --> CaseService : uses >
+HearingMenu --> HearingService : uses >
+DocumentMenu --> DocumentService : uses >
+
+AuthService --> UserDAO : uses >
+ClientService --> ClientDAO : uses >
+CaseService --> CaseDAO : uses >
+CaseService --> ClientDAO : uses >
+HearingService --> HearingDAO : uses >
+HearingService --> CaseDAO : uses >
+DocumentService --> DocumentDAO : uses >
+DocumentService --> CaseDAO : uses >
+
+@enduml
