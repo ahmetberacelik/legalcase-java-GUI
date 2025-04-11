@@ -1,0 +1,86 @@
+@startgantt
+title Legal Case Tracker Project Schedule
+printscale weekly
+projectscale monthly
+
+project starts the 2023-03-11
+saturday are closed
+sunday are closed
+
+[Basic Legal Case Tracker] as [BLC] lasts 31 days
+[BLC] starts 2023-03-11
+
+[Project Initialization and Planning] as [PIP] lasts 3 days
+[PIP] starts 2023-03-25
+
+[Create project plan] as [CPP] lasts 4 days
+[CPP] starts 2023-03-25
+
+[User Authentication] as [UA] lasts 2 days
+[UA] starts 2023-03-28
+
+[2.1 Design User and UserService classes] as [DU] lasts 2 days
+[DU] starts 2023-03-30
+
+[2.2 Perform unit testing] as [PUT2] lasts 1 day
+[PUT2] starts 2023-04-03
+
+[3. Event Tracking] as [ET] lasts 2 days
+[ET] starts 2023-03-29
+
+[3.1 Create Case Event and Event handling] as [CCE] lasts 1 day
+[CCE] starts 2023-03-30
+
+[3.2 Perform unit testing] as [PUT3] lasts 1 day
+[PUT3] starts 2023-03-31
+
+[4. Case Management] as [CM] lasts 3 days
+[CM] starts 2023-04-03
+
+[4.1 Create Case class and CaseService] as [CCC] lasts 2 days
+[CCC] starts 2023-03-25
+
+[4.2 Perform unit testing] as [PUT4] lasts 1 day
+[PUT4] starts 2023-03-29
+
+[5. Hearing Scheduler] as [HS] lasts 2 days
+[HS] starts 2023-03-28
+
+[5.1 Hearing class and file handling] as [HCF] lasts 1 day
+[HCF] starts 2023-03-29
+
+[5.2 Perform unit testing] as [PUT5] lasts 1 day
+[PUT5] starts 2023-03-31
+
+[6. Document Management] as [DM] lasts 2 days
+[DM] starts 2023-04-03
+
+[6.1 Document class and storage] as [DCS] lasts 1 day
+[DCS] starts 2023-03-29
+
+[6.2 Perform unit testing] as [PUT6] lasts 1 day
+[PUT6] starts 2023-03-30
+
+[7. Menu System and User Interface] as [MS] lasts 2 days
+[MS] starts 2023-04-03
+
+[8. Testing and Debugging] as [TD] lasts 2 days
+[TD] starts 2023-04-05
+
+[9. Reporting and Delivery] as [RD] lasts 1 day
+[RD] starts 2023-04-07
+
+[CPP] -> [UA]
+[UA] -> [ET]
+[ET] -> [PUT3]
+[PUT3] -> [CM]
+[CCC] -> [PUT4]
+[PUT4] -> [HS]
+[HS] -> [HCF]
+[HCF] -> [PUT5]
+[PUT5] -> [DM]
+[DM] -> [MS]
+[MS] -> [TD]
+[TD] -> [RD]
+
+@endgantt
