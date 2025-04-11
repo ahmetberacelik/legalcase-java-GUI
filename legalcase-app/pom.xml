@@ -203,6 +203,15 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.hasan.esra.ahmet.yakup.legalcaseconsole.LegalcaseApp</mainClass>
+                </configuration>
+            </plugin>
+
             <!-- Maven Shade Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
