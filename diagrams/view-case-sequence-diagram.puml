@@ -1,0 +1,29 @@
+@startuml View Case Details - Sequence Diagram
+
+actor User
+boundary "CaseMenu" as CaseMenu
+control "CaseService" as CaseService
+entity "CaseDAO" as CaseDAO
+database "Database" as DB
+
+User -> CaseMenu: Select View Case Option
+CaseMenu -> CaseMenu: viewCase()
+CaseMenu -> ConsoleHelper: readLong("Enter case ID:")
+ConsoleHelper --> CaseMenu: caseId
+CaseMenu -> CaseService: getCaseById(caseId)
+CaseService -> CaseDAO: getById(caseId)
+CaseDAO -> DB: Query case by ID
+DB --> CaseDAO: Case record
+CaseDAO --> CaseService: Optional<Case>
+CaseService --> CaseMenu: Optional<Case>
+CaseMenu -> CaseMenu: Check if case exists
+CaseMenu -> CaseService: getClientsForCase(caseId)
+CaseService -> CaseDAO: getClientsForCase(caseId)
+CaseDAO -> DB: Query clients for case
+DB --> CaseDAO: List<Client>
+CaseDAO --> CaseService: List<Client>
+CaseService --> CaseMenu: List<Client>
+CaseMenu -> ConsoleHelper: Display case details and associated clients
+CaseMenu --> User: Show case details
+
+@enduml
