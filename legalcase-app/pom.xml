@@ -5,53 +5,38 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<!-- The Basics -->
-	<groupId>com.ucoruh.calculator</groupId>
-	<artifactId>calculator-app</artifactId>
+	<groupId>com.hasan.esra.ahmet.yakup.legalcase</groupId>
+	<artifactId>legalcase-app</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<!-- More Project Information -->
-	<name>calculator-app</name>
+	<name>legalcase-app</name>
 	<url>https://github.com/ucoruh/eclipse-java-maven-template</url>
 	<scm>
 		<url>https://github.com/ucoruh/eclipse-java-maven-template</url>
 	</scm>
-	<inceptionYear>2023</inceptionYear>
+	<inceptionYear>2025</inceptionYear>
 	<developers>
 		<developer>
-			<name>Asst. Prof. Dr. Ugur CORUH</name>
+			<name>Ahmet Bera Celik</name>
 			<organization>RTEU</organization>
-			<email>ugur.coruh@erdogan.edu.tr</email>
+			<email>ahmetbera_celik22@erdogan.edu.tr</email>
 			<roles>
 				<role>Developer</role>
 				<role>Designer</role>
 			</roles>
 		</developer>
 		<developer>
-			<name>Other Person</name>
-			<organization>RTEU</organization>
-			<email>mail@gmail.com</email>
-			<roles>
-				<role>Developer</role>
-			</roles>
-		</developer>
 	</developers>
 	<contributors>
 		<contributor>
-			<name>Asst. Prof. Dr. Ugur CORUH</name>
-			<email>ugur.coruh@erdogan.edu.tr</email>
+			<name>Ahmet Bera Celik</name>
+			<email>ahmetbera_celik22@erdogan.edu.tr</email>
 			<organization>RTEU</organization>
 			<roles>
 				<role>Developer</role>
 				<role>Designer</role>
-			</roles>
-		</contributor>
-		<contributor>
-			<name>Other Person</name>
-			<organization>RTEU</organization>
-			<email>mail@gmail.com</email>
-			<roles>
-				<role>Developer</role>
 			</roles>
 		</contributor>
 	</contributors>
@@ -69,7 +54,7 @@
 		<system>Github</system>
 		<notifiers>
 			<notifier>
-				<address>ugur.coruh@erdogan.edu.tr</address>
+				<address>ahmetbera_celik22@erdogan.edu.tr</address>
 				<sendOnSuccess>true</sendOnSuccess>
 				<sendOnError>true</sendOnError>
 				<sendOnFailure>true</sendOnFailure>
@@ -145,8 +130,8 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<includes>
-						<include>**/CalculatorAppTest.java</include>
-						<include>**/CalculatorTest.java</include>
+						<include>**/LegalcaseAppTest.java</include>
+						<include>**/LegalcaseTest.java</include>
 					</includes>
 				</configuration>
 			</plugin>
@@ -250,7 +235,7 @@
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>
-										com.ucoruh.calculator.CalculatorApp</mainClass>
+										com.hasan.esra.ahmet.yakup.legalcase.LegalcaseApp</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
