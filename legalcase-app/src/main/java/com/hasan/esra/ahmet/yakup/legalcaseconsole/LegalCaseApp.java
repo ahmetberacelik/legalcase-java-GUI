@@ -33,9 +33,9 @@ import java.util.logging.Logger;
  * @author Hasan, Esra, Ahmet, Yakup
  * @date 2025-04-02
  */
-public class LegalcaseApp {
+public class LegalCaseApp {
     /** Logger for this class */
-    private static final Logger LOGGER = Logger.getLogger(LegalcaseApp.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(LegalCaseApp.class.getName());
 
     /**
      * @brief Main method - application entry point

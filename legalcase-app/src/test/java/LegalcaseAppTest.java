@@ -7,10 +7,6 @@ package com.hasan.esra.ahmet.yakup.legalcaseconsole;
 
 import static org.junit.Assert.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.Scanner;
 
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.ConsoleHelper;
@@ -29,7 +25,7 @@ public class LegalcaseAppTest {
     @Test
     public void testMainSuccess() {
         ConsoleHelper.setScanner(new Scanner("3\n"));
-        LegalcaseApp app = new LegalcaseApp();
+        LegalCaseApp app = new LegalCaseApp();
         app.main(new String[] {});
         assertTrue(true);
     }
