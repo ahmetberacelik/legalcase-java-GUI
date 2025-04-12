@@ -1,0 +1,100 @@
+@startuml UML Activity Diagram
+
+start
+:User logs in;
+if (Authentication successful?) then (yes)
+  :Display main menu;
+  repeat
+    :User selects menu option;
+    switch (Selected option)
+    case (Case Management)
+      :Display case menu;
+      switch (Case action)
+      case (Create new case)
+        :Enter case details;
+        :Validate case data;
+        if (Data valid?) then (yes)
+          :Save case to database;
+          :Display success message;
+        else (no)
+          :Display error message;
+        endif
+      case (View case)
+        :Enter case ID;
+        :Retrieve case details;
+        if (Case exists?) then (yes)
+          :Display case details;
+          :Retrieve associated clients;
+          :Display client information;
+        else (no)
+          :Display "Case not found" message;
+        endif
+      case (Update case)
+        :Enter case ID;
+        :Retrieve case details;
+        if (Case exists?) then (yes)
+          :Display editable fields;
+          :User updates information;
+          :Save changes to database;
+          :Display success message;
+        else (no)
+          :Display "Case not found" message;
+        endif
+      endswitch
+    case (Client Management)
+      :Display client menu;
+      switch (Client action)
+      case (Add client)
+        :Enter client details;
+        :Validate client data;
+        if (Data valid?) then (yes)
+          :Save client to database;
+          :Display success message;
+        else (no)
+          :Display error message;
+        endif
+      case (Assign to case)
+        :Select case;
+        :Select client;
+        :Create case-client association;
+        :Display success message;
+      endswitch
+    case (Hearing Management)
+      :Display hearing menu;
+      switch (Hearing action)
+      case (Schedule hearing)
+        :Select case;
+        :Enter hearing details;
+        :Save hearing to database;
+        :Display success message;
+      case (Update hearing)
+        :Select hearing;
+        :Modify hearing details;
+        :Save changes to database;
+        :Display success message;
+      endswitch
+    case (Document Management)
+      :Display document menu;
+      switch (Document action)
+      case (Upload document)
+        :Select case;
+        :Enter document details;
+        :Upload file;
+        :Save document metadata to database;
+        :Display success message;
+      case (View document)
+        :Select document;
+        :Display document details;
+      endswitch
+    case (Logout)
+      :Clear session data;
+      :Return to login screen;
+      stop
+    endswitch
+  repeat while (Continue using system?) is (yes)
+else (no)
+  :Display authentication error;
+endif
+stop
+
+@enduml

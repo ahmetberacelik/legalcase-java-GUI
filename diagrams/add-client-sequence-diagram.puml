@@ -1,0 +1,32 @@
+@startuml Add Client Process - Sequence Diagram
+
+actor User
+boundary "ClientMenu" as ClientMenu
+control "ClientService" as ClientService
+entity "ClientDAO" as ClientDAO
+database "Database" as DB
+
+User -> ClientMenu: Select Add Client Option
+ClientMenu -> ClientMenu: addClient()
+ClientMenu -> ConsoleHelper: readString("Enter client name:")
+ConsoleHelper --> ClientMenu: name
+ClientMenu -> ConsoleHelper: readString("Enter client email:")
+ConsoleHelper --> ClientMenu: email
+ClientMenu -> ConsoleHelper: readString("Enter client phone:")
+ConsoleHelper --> ClientMenu: phone
+ClientMenu -> ConsoleHelper: readString("Enter client address:")
+ConsoleHelper --> ClientMenu: address
+ClientMenu -> ClientService: createClient(name, email, phone, address)
+ClientService -> ClientDAO: getByEmail(email)
+ClientDAO -> DB: Query client by email
+DB --> ClientDAO: Optional<Client>
+ClientService -> ClientService: Validate email uniqueness
+ClientService -> ClientDAO: create(client)
+ClientDAO -> DB: Insert new client
+DB --> ClientDAO: Created client
+ClientDAO --> ClientService: Client
+ClientService --> ClientMenu: Client
+ClientMenu -> ConsoleHelper: displaySuccess("Client added successfully")
+ClientMenu --> User: Show success message
+
+@enduml

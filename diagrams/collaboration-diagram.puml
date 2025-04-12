@@ -1,0 +1,26 @@
+@startuml UML Collaboration Diagram
+
+actor User
+boundary "CaseMenu" as CaseMenu
+control "CaseService" as CaseService
+entity "CaseDAO" as CaseDAO
+entity "ClientDAO" as ClientDAO
+database "Database" as DB
+
+User -> CaseMenu : "1: Select View Case Option"
+CaseMenu -> CaseMenu : "2: viewCase()"
+CaseMenu -> CaseService : "3: getCaseById(caseId)"
+CaseService -> CaseDAO : "4: getById(caseId)"
+CaseDAO -> DB : "5: Query case by ID"
+DB --> CaseDAO : "6: Case record"
+CaseDAO --> CaseService : "7: Optional<Case>"
+CaseService --> CaseMenu : "8: Optional<Case>"
+CaseMenu -> CaseService : "9: getClientsForCase(caseId)"
+CaseService -> ClientDAO : "10: getClientsForCase(caseId)"
+ClientDAO -> DB : "11: Query clients for case"
+DB --> ClientDAO : "12: List<Client>"
+ClientDAO --> CaseService : "13: List<Client>"
+CaseService --> CaseMenu : "14: List<Client>"
+CaseMenu --> User : "15: Show case details"
+
+@enduml

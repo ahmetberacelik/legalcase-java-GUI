@@ -1,0 +1,85 @@
+@startuml Object Diagram
+
+object "case1:Case" as case1 {
+  id = 1
+  caseNumber = "C2023-001"
+  title = "Smith v. Jones"
+  type = CIVIL
+  description = "Property dispute case"
+  status = OPEN
+  createdAt = "2023-01-15"
+  updatedAt = "2023-01-15"
+}
+
+object "client1:Client" as client1 {
+  id = 1
+  name = "John Smith"
+  email = "john.smith@example.com"
+  phone = "555-123-4567"
+  address = "123 Main St, Anytown"
+  createdAt = "2023-01-10"
+  updatedAt = "2023-01-10"
+}
+
+object "client2:Client" as client2 {
+  id = 2
+  name = "Jane Jones"
+  email = "jane.jones@example.com"
+  phone = "555-987-6543"
+  address = "456 Oak Ave, Anytown"
+  createdAt = "2023-01-12"
+  updatedAt = "2023-01-12"
+}
+
+object "caseClient1:CaseClient" as caseClient1 {
+  caseId = 1
+  clientId = 1
+}
+
+object "caseClient2:CaseClient" as caseClient2 {
+  caseId = 1
+  clientId = 2
+}
+
+object "hearing1:Hearing" as hearing1 {
+  id = 1
+  caseId = 1
+  date = "2023-02-15"
+  time = "10:00"
+  location = "Courtroom 3B"
+  judgeName = "Hon. Robert Wilson"
+  notes = "Initial hearing"
+  status = SCHEDULED
+  createdAt = "2023-01-20"
+  updatedAt = "2023-01-20"
+}
+
+object "document1:Document" as document1 {
+  id = 1
+  caseId = 1
+  title = "Complaint Filing"
+  type = LEGAL_BRIEF
+  filePath = "/documents/case1/complaint.pdf"
+  uploadDate = "2023-01-16"
+  createdAt = "2023-01-16"
+  updatedAt = "2023-01-16"
+}
+
+object "user1:User" as user1 {
+  id = 1
+  username = "lawyer1"
+  passwordHash = "[hashed password]"
+  role = ATTORNEY
+  createdAt = "2023-01-01"
+  updatedAt = "2023-01-01"
+}
+
+case1 -- caseClient1
+case1 -- caseClient2
+caseClient1 -- client1
+caseClient2 -- client2
+case1 -- hearing1
+case1 -- document1
+user1 -- case1 : manages >
+
+@enduml

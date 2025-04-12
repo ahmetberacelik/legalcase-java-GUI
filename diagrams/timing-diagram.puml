@@ -1,0 +1,55 @@
+@startuml UML Timing Diagram
+
+robust "User" as U
+robust "UI" as UI
+robust "Service" as S
+robust "DAO" as D
+robust "Database" as DB
+
+@0
+U is Idle
+UI is Idle
+S is Idle
+D is Idle
+DB is Idle
+
+@+100
+U is "Request"
+UI is Idle
+
+@+50
+UI is "Processing"
+S is Idle
+
+@+50
+S is "Processing"
+D is Idle
+
+@+50
+D is "Query"
+DB is Idle
+
+@+100
+DB is "Processing"
+
+@+150
+DB is Idle
+D is "Processing"
+
+@+50
+D is Idle
+S is "Processing"
+
+@+50
+S is Idle
+UI is "Processing"
+
+@+50
+UI is "Response"
+U is "Viewing"
+
+@+200
+U is Idle
+UI is Idle
+
+@enduml

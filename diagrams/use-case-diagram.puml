@@ -1,0 +1,89 @@
+@startuml UML Use Case Diagram
+
+left to right direction
+
+actor "Attorney" as attorney
+actor "Legal Assistant" as assistant
+actor "System Administrator" as admin
+
+rectangle "Legal Case Management System" {
+  ' Authentication use cases
+  usecase "Login" as UC1
+  usecase "Logout" as UC2
+  usecase "Reset Password" as UC3
+  
+  ' Case management use cases
+  usecase "Create New Case" as UC4
+  usecase "View Case Details" as UC5
+  usecase "Update Case Status" as UC6
+  usecase "Search Cases" as UC7
+  
+  ' Client management use cases
+  usecase "Add New Client" as UC8
+  usecase "View Client Details" as UC9
+  usecase "Update Client Information" as UC10
+  usecase "Assign Client to Case" as UC11
+  
+  ' Document management use cases
+  usecase "Upload Document" as UC12
+  usecase "View Document" as UC13
+  usecase "Download Document" as UC14
+  
+  ' Hearing management use cases
+  usecase "Schedule Hearing" as UC15
+  usecase "Update Hearing Details" as UC16
+  usecase "Cancel Hearing" as UC17
+  usecase "View Hearing Calendar" as UC18
+  
+  ' System administration use cases
+  usecase "Create User Account" as UC19
+  usecase "Manage User Permissions" as UC20
+  usecase "System Backup" as UC21
+}
+
+' Attorney relationships
+attorney --> UC1
+attorney --> UC2
+attorney --> UC4
+attorney --> UC5
+attorney --> UC6
+attorney --> UC7
+attorney --> UC8
+attorney --> UC9
+attorney --> UC10
+attorney --> UC11
+attorney --> UC12
+attorney --> UC13
+attorney --> UC14
+attorney --> UC15
+attorney --> UC16
+attorney --> UC17
+attorney --> UC18
+
+' Legal Assistant relationships
+assistant --> UC1
+assistant --> UC2
+assistant --> UC5
+assistant --> UC7
+assistant --> UC9
+assistant --> UC10
+assistant --> UC13
+assistant --> UC14
+assistant --> UC18
+
+' System Administrator relationships
+admin --> UC1
+admin --> UC2
+admin --> UC19
+admin --> UC20
+admin --> UC21
+admin --> UC3
+
+' Include relationships
+UC4 ..> UC8 : <<include>>
+UC11 ..> UC5 : <<include>>
+UC11 ..> UC9 : <<include>>
+UC12 ..> UC5 : <<include>>
+UC15 ..> UC5 : <<include>>
+
+@enduml
