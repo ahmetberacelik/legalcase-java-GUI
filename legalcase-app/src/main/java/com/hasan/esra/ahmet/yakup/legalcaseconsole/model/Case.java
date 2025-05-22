@@ -17,9 +17,6 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.CaseStatus;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.CaseType;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,10 +29,14 @@ import java.util.List;
  * associated clients, hearings, and documents.
  */
 @DatabaseTable(tableName = "cases")
-@Getter
-@Setter
-@NoArgsConstructor
 public class Case extends BaseEntity {
+
+    /**
+     * @brief Explicit no-arg constructor required by ORMLite
+     */
+    public Case() {
+        super();
+    }
 
     /**
      * @brief Unique case number identifier
@@ -119,6 +120,118 @@ public class Case extends BaseEntity {
         this.title = title;
         this.type = type;
         this.status = CaseStatus.NEW;
+    }
+
+    /**
+     * @brief Get the case number
+     * @return The official case number
+     */
+    public String getCaseNumber() {
+        return caseNumber;
+    }
+
+    /**
+     * @brief Set the case number
+     * @param caseNumber The case number to set
+     */
+    public void setCaseNumber(String caseNumber) {
+        this.caseNumber = caseNumber;
+    }
+
+    /**
+     * @brief Get the title of the case
+     * @return The title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * @brief Set the title of the case
+     * @param title The title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @brief Get the type of the case
+     * @return The case type
+     */
+    public CaseType getType() {
+        return type;
+    }
+
+    /**
+     * @brief Set the type of the case
+     * @param type The case type to set
+     */
+    public void setType(CaseType type) {
+        this.type = type;
+    }
+
+    /**
+     * @brief Get the description of the case
+     * @return The case description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @brief Set the description of the case
+     * @param description The description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @brief Get the status of the case
+     * @return The case status
+     */
+    public CaseStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * @brief Set the status of the case
+     * @param status The status to set
+     */
+    public void setStatus(CaseStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * @brief Get the hearings collection
+     * @return Collection of hearings
+     */
+    public Collection<Hearing> getHearings() {
+        return hearings;
+    }
+
+    /**
+     * @brief Set the hearings collection
+     * @param hearings The collection to set
+     */
+    public void setHearings(Collection<Hearing> hearings) {
+        this.hearings = hearings;
+    }
+
+    /**
+     * @brief Get the documents collection
+     * @return Collection of documents
+     */
+    public Collection<Document> getDocuments() {
+        return documents;
+    }
+
+    /**
+     * @brief Set the documents collection
+     * @param documents The collection to set
+     */
+    public void setDocuments(Collection<Document> documents) {
+        this.documents = documents;
     }
 
     /**
