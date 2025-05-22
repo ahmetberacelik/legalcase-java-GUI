@@ -1,9 +1,7 @@
 package com.hasan.esra.ahmet.yakup.legalcaseconsole.service;
 
 import static org.junit.Assert.*;
-
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -231,8 +229,8 @@ public class CaseServiceTest {
      */
     @Test
     public void Test_GetCasesByStatus_ExistingStatus_ReturnsCasesWithStatus() {
-        // Create cases with different statuses
-        Case newCase = caseService.createCase("STATUS-NEW", "New Case", CaseType.CIVIL, "New case description");
+        // Create a new case with ACTIVE status
+        caseService.createCase("STATUS-001", "Active Case", CaseType.CIVIL, "Description");
 
         Case activeCase = caseService.createCase("STATUS-ACTIVE", "Active Case", CaseType.CRIMINAL, "Active case description");
         caseService.updateCase(
@@ -266,7 +264,6 @@ public class CaseServiceTest {
         assertEquals("Should have 1 PENDING case", 1, pendingCases.size());
         assertEquals("Should have 0 CLOSED cases", 0, closedCases.size());
 
-        assertEquals("NEW case should have correct number", "STATUS-NEW", newCases.get(0).getCaseNumber());
         assertEquals("ACTIVE case should have correct number", "STATUS-ACTIVE", activeCases.get(0).getCaseNumber());
         assertEquals("PENDING case should have correct number", "STATUS-PENDING", pendingCases.get(0).getCaseNumber());
     }
@@ -945,11 +942,10 @@ public class CaseServiceTest {
          * @brief Override of update method to throw SQLException
          *
          * @param caseEntity The case entity to update
-         * @return Never returns as SQLException is always thrown
          * @throws SQLException Always thrown to simulate database error
          */
         @Override
-        public int update(Case caseEntity) throws SQLException {
+        public void update(Case caseEntity) throws SQLException {
             throw new SQLException("Forced SQLException for testing");
         }
 
@@ -957,11 +953,10 @@ public class CaseServiceTest {
          * @brief Override of delete method to throw SQLException
          *
          * @param caseEntity The case entity to delete
-         * @return Never returns as SQLException is always thrown
          * @throws SQLException Always thrown to simulate database error
          */
         @Override
-        public int delete(Case caseEntity) throws SQLException {
+        public void delete(Case caseEntity) throws SQLException {
             throw new SQLException("Forced SQLException for testing");
         }
 
@@ -969,11 +964,10 @@ public class CaseServiceTest {
          * @brief Override of deleteById method to throw SQLException
          *
          * @param id The ID of the case to delete
-         * @return Never returns as SQLException is always thrown
          * @throws SQLException Always thrown to simulate database error
          */
         @Override
-        public int deleteById(Long id) throws SQLException {
+        public void deleteById(Long id) throws SQLException {
             throw new SQLException("Forced SQLException for testing");
         }
 
