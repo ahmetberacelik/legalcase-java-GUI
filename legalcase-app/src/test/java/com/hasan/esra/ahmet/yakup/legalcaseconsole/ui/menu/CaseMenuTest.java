@@ -14,8 +14,9 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.CaseService;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.ClientService;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.DocumentService;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.HearingService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.ConsoleHelper;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.MenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.ConsoleMenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.UiConsoleHelper;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu.CaseMenu;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.util.TestDatabaseManager;
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +33,7 @@ import static org.junit.Assert.*;
 
 public class CaseMenuTest {
 
-    private MenuManager menuManager;
+    private ConsoleMenuManager consoleMenuManager;
     private CaseMenu caseMenu;
     private CaseService caseService;
     private ClientService clientService;
@@ -47,20 +48,20 @@ public class CaseMenuTest {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
-    // MenuManager'ı test için genişleten iç sınıf
-    private class TestMenuManager extends MenuManager {
+    // Inner class that extends MenuManager for testing
+    private class TestConsoleMenuManager extends ConsoleMenuManager {
         private boolean navigatedToMainMenu = false;
 
-        public TestMenuManager(AuthService authService, ClientService clientService,
-                               CaseService caseService, HearingService hearingService,
-                               DocumentService documentService) {
+        public TestConsoleMenuManager(AuthService authService, ClientService clientService,
+                                      CaseService caseService, HearingService hearingService,
+                                      DocumentService documentService) {
             super(authService, clientService, caseService, hearingService, documentService);
         }
 
         @Override
         public void navigateToMainMenu() {
             navigatedToMainMenu = true;
-            // Burada test için hiçbir şey yapmadan başarılı işaretlenecek
+            // Will be marked as successful without doing anything for testing
         }
 
         public boolean isNavigatedToMainMenu() {
@@ -70,203 +71,203 @@ public class CaseMenuTest {
 
     @Before
     public void setUp() throws SQLException {
-        // Konsol çıktısını yakalama
+        // Capture console output
         System.setOut(new PrintStream(outContent));
 
-        // Test veritabanını kurma
+        // Set up test database
         TestDatabaseManager.createTables();
 
-        // DAO nesnelerini oluşturma
+        // Create DAO objects
         caseDAO = new CaseDAO(TestDatabaseManager.getConnectionSource());
         clientDAO = new ClientDAO(TestDatabaseManager.getConnectionSource());
         userDAO = new UserDAO(TestDatabaseManager.getConnectionSource());
 
-        // Service nesnelerini oluşturma
+        // Create service objects
         caseService = new CaseService(caseDAO, clientDAO);
         clientService = new ClientService(clientDAO);
         authService = new AuthService(userDAO);
-        documentService = new DocumentService(null, caseDAO); // Belge DAO'su null olabilir, bizim testlerimiz için gerekli değil
-        hearingService = new HearingService(null, caseDAO); // Duruşma DAO'su null olabilir, bizim testlerimiz için gerekli değil
+        documentService = new DocumentService(null, caseDAO); // Document DAO can be null, not needed for our tests
+        hearingService = new HearingService(null, caseDAO); // Hearing DAO can be null, not needed for our tests
 
-        // Test kullanıcısı oluşturup giriş yapalım
+        // Create test user and login
         User testUser = authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
         authService.login("testuser", "password");
 
-        // MenuManager'ı test versiyonuyla oluşturma
-        menuManager = new TestMenuManager(authService, clientService, caseService, hearingService, documentService);
+        // Create MenuManager with test version
+        consoleMenuManager = new TestConsoleMenuManager(authService, clientService, caseService, hearingService, documentService);
 
-        // CaseMenu nesnesi oluşturma
-        caseMenu = new CaseMenu(menuManager, caseService, clientService);
+        // Create CaseMenu object
+        caseMenu = new CaseMenu(consoleMenuManager, caseService, clientService);
     }
 
     @After
     public void tearDown() throws SQLException {
-        // Konsol çıktısını eski haline getirme
+        // Restore console output
         System.setOut(originalOut);
 
-        // Scanner'ı sıfırlama
-        ConsoleHelper.resetScanner();
+        // Reset Scanner
+        UiConsoleHelper.resetScanner();
 
-        // Test veritabanı bağlantısını kapatma
+        // Close test database connection
         TestDatabaseManager.closeConnection();
     }
 
     @Test
     public void Test_Display_SelectAddCase_Success() throws SQLException {
-        // Düzenleme - Scanner'ı "1. Yeni Dava Ekle" seçeneğini seçecek şekilde ayarlama
-        // Örnek dava bilgileri ve işlem sonunda ana menüye dönme (9)
-        ConsoleHelper.setScanner(new Scanner("1\nDV2023-001\nTest Davası\n1\nTest açıklaması\nn\n\n9\n"));
+        // Setup - Configure Scanner to select "1. Add New Case" option
+        // Example case information and return to main menu (9)
+        UiConsoleHelper.setScanner(new Scanner("1\nDV2023-001\nTest Case\n1\nTest description\nn\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Dava oluşturuldu mu?
+        // Verification - Was the case created?
         Optional<Case> caseOpt = caseService.getCaseByCaseNumber("DV2023-001");
-        assertTrue("Dava oluşturulmalı", caseOpt.isPresent());
-        assertEquals("Dava başlığı doğru olmalı", "Test Davası", caseOpt.get().getTitle());
-        assertEquals("Dava tipi doğru olmalı", CaseType.CIVIL, caseOpt.get().getType());
-        assertEquals("Dava açıklaması doğru olmalı", "Test açıklaması", caseOpt.get().getDescription());
-        assertEquals("Dava durumu YENİ olmalı", CaseStatus.NEW, caseOpt.get().getStatus());
+        assertTrue("Case should be created", caseOpt.isPresent());
+        assertEquals("Case title should be correct", "Test Case", caseOpt.get().getTitle());
+        assertEquals("Case type should be correct", CaseType.CIVIL, caseOpt.get().getType());
+        assertEquals("Case description should be correct", "Test description", caseOpt.get().getDescription());
+        assertEquals("Case status should be NEW", CaseStatus.NEW, caseOpt.get().getStatus());
     }
 
     @Test
     public void Test_Display_SelectAddCase_WithClient_Success() throws SQLException {
-        // Önce bir müvekkil ekleyelim
+        // First add a client
         Client client = new Client("John", "Doe", "john.doe@example.com");
         clientDAO.create(client);
 
-        // Düzenleme - Scanner'ı "1. Yeni Dava Ekle" seçeneğini seçecek ve müvekkil ekleyecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("1\nDV2023-002\nTest Davası 2\n2\nMüvekkilli Test\ny\n" + client.getId() + "\n\n9\n"));
+        // Setup - Configure Scanner to select "1. Add New Case" option and add client
+        UiConsoleHelper.setScanner(new Scanner("1\nDV2023-002\nTest Case 2\n2\nClient Test\ny\n" + client.getId() + "\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Dava oluşturuldu mu ve müvekkil eklendi mi?
+        // Verification - Was the case created and client added?
         Optional<Case> caseOpt = caseService.getCaseByCaseNumber("DV2023-002");
-        assertTrue("Dava oluşturulmalı", caseOpt.isPresent());
+        assertTrue("Case should be created", caseOpt.isPresent());
 
         List<Client> clients = caseService.getClientsForCase(caseOpt.get().getId());
-        assertFalse("Dava müvekkil listesi boş olmamalı", clients.isEmpty());
-        assertEquals("Dava müvekkil ID'si doğru olmalı", client.getId(), clients.get(0).getId());
+        assertFalse("Case client list should not be empty", clients.isEmpty());
+        assertEquals("Case client ID should be correct", client.getId(), clients.get(0).getId());
     }
 
     @Test
     public void Test_Display_SelectViewCaseDetails_Success() throws SQLException {
-        // Önce bir dava ekleyelim
-        Case caseEntity = new Case("DV2023-003", "Test Davası 3", CaseType.CRIMINAL);
-        caseEntity.setDescription("Detaylı açıklama");
+        // First add a case
+        Case caseEntity = new Case("DV2023-003", "Test Case 3", CaseType.CRIMINAL);
+        caseEntity.setDescription("Detailed description");
         caseDAO.create(caseEntity);
 
-        // Düzenleme - Scanner'ı "2. Dava Detaylarını Görüntüle" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("2\n" + caseEntity.getId() + "\n\n9\n"));
+        // Setup - Configure Scanner to select "2. View Case Details" option
+        UiConsoleHelper.setScanner(new Scanner("2\n" + caseEntity.getId() + "\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Çıktıda dava bilgileri var mı?
+        // Verification - Are case details in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda dava numarası olmalı", output.contains("DV2023-003"));
-        assertTrue("Çıktıda dava başlığı olmalı", output.contains("Test Davası 3"));
-        assertTrue("Çıktıda dava tipi olmalı", output.contains("CRIMINAL"));
-        assertTrue("Çıktıda dava açıklaması olmalı", output.contains("Detaylı açıklama"));
+        assertTrue("Output should contain case number", output.contains("DV2023-003"));
+        assertTrue("Output should contain case title", output.contains("Test Case 3"));
+        assertTrue("Output should contain case type", output.contains("CRIMINAL"));
+        assertTrue("Output should contain case description", output.contains("Detailed description"));
     }
 
     @Test
     public void Test_Display_SelectViewCaseDetails_NonExistentCase_NotFound() {
-        // Düzenleme - Scanner'ı olmayan bir dava ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("2\n9999\n\n9\n"));
+        // Setup - Configure Scanner with non-existent case ID
+        UiConsoleHelper.setScanner(new Scanner("2\n9999\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Dava bulunamadı' mesajı olmalı", output.contains("not found"));
+        assertTrue("Output should contain 'Case not found' message", output.contains("not found"));
     }
 
     @Test
     public void Test_Display_SelectUpdateCase_Success() throws SQLException {
-        // Önce bir dava ekleyelim
-        Case caseEntity = new Case("DV2023-004", "Eski Başlık", CaseType.FAMILY);
-        caseEntity.setDescription("Eski açıklama");
+        // First add a case
+        Case caseEntity = new Case("DV2023-004", "Old Title", CaseType.FAMILY);
+        caseEntity.setDescription("Old description");
         caseDAO.create(caseEntity);
 
-        // Düzenleme - Scanner'ı "3. Dava Güncelle" seçeneğini seçecek şekilde ayarlama
-        // Tüm alanları güncelleyelim
-        ConsoleHelper.setScanner(new Scanner("3\n" + caseEntity.getId() + "\nDV2023-004-UPD\nYeni Başlık\ny\n3\ny\n2\nYeni açıklama\n\n9\n"));
+        // Setup - Configure Scanner to select "3. Update Case" option
+        // Update all fields
+        UiConsoleHelper.setScanner(new Scanner("3\n" + caseEntity.getId() + "\nDV2023-004-UPD\nNew Title\ny\n3\ny\n2\nNew description\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Dava güncellendi mi?
+        // Verification - Was the case updated?
         Optional<Case> updatedCase = caseService.getCaseById(caseEntity.getId());
-        assertTrue("Dava bulunmalı", updatedCase.isPresent());
-        assertEquals("Dava numarası güncellenmeli", "DV2023-004-UPD", updatedCase.get().getCaseNumber());
-        assertEquals("Dava başlığı güncellenmeli", "Yeni Başlık", updatedCase.get().getTitle());
-        assertEquals("Dava tipi güncellenmeli", CaseType.FAMILY, updatedCase.get().getType());
-        assertEquals("Dava durumu güncellenmeli", CaseStatus.ACTIVE, updatedCase.get().getStatus());
-        assertEquals("Dava açıklaması güncellenmeli", "Yeni açıklama", updatedCase.get().getDescription());
+        assertTrue("Case should be found", updatedCase.isPresent());
+        assertEquals("Case number should be updated", "DV2023-004-UPD", updatedCase.get().getCaseNumber());
+        assertEquals("Case title should be updated", "New Title", updatedCase.get().getTitle());
+        assertEquals("Case type should be updated", CaseType.FAMILY, updatedCase.get().getType());
+        assertEquals("Case status should be updated", CaseStatus.ACTIVE, updatedCase.get().getStatus());
+        assertEquals("Case description should be updated", "New description", updatedCase.get().getDescription());
     }
 
     @Test
     public void Test_Display_SelectDeleteCase_Confirm_Success() throws SQLException {
-        // Önce bir dava ekleyelim
-        Case caseEntity = new Case("DV2023-005", "Silinecek Dava", CaseType.CORPORATE);
+        // First add a case
+        Case caseEntity = new Case("DV2023-005", "Case to Delete", CaseType.CORPORATE);
         caseDAO.create(caseEntity);
 
-        // Düzenleme - Scanner'ı "4. Dava Sil" seçeneğini seçecek ve onaylayacak şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("4\n" + caseEntity.getId() + "\ny\n\n9\n"));
+        // Setup - Configure Scanner to select "4. Delete Case" option and confirm
+        UiConsoleHelper.setScanner(new Scanner("4\n" + caseEntity.getId() + "\ny\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Dava silindi mi?
+        // Verification - Was the case deleted?
         Optional<Case> deletedCase = caseService.getCaseById(caseEntity.getId());
-        assertFalse("Dava silinmeli", deletedCase.isPresent());
+        assertFalse("Case should be deleted", deletedCase.isPresent());
     }
 
     @Test
     public void Test_Display_SelectDeleteCase_Cancel_NotDeleted() throws SQLException {
-        // Önce bir dava ekleyelim
-        Case caseEntity = new Case("DV2023-006", "Silinmeyecek Dava", CaseType.OTHER);
+        // First add a case
+        Case caseEntity = new Case("DV2023-006", "Case Not to Delete", CaseType.OTHER);
         caseDAO.create(caseEntity);
 
-        // Düzenleme - Scanner'ı "4. Dava Sil" seçeneğini seçecek ama iptal edecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("4\n" + caseEntity.getId() + "\nn\n\n9\n"));
+        // Setup - Configure Scanner to select "4. Delete Case" option but cancel
+        UiConsoleHelper.setScanner(new Scanner("4\n" + caseEntity.getId() + "\nn\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Dava silinmedi mi?
+        // Verification - Was the case not deleted?
         Optional<Case> notDeletedCase = caseService.getCaseById(caseEntity.getId());
-        assertTrue("Dava silinmemeli", notDeletedCase.isPresent());
+        assertTrue("Case should not be deleted", notDeletedCase.isPresent());
     }
 
     @Test
     public void Test_Display_SelectAddClientToCase_Success() throws SQLException {
-        // Önce bir dava ve müvekkil ekleyelim
-        Case caseEntity = new Case("DV2023-007", "Müvekkil Eklenecek Dava", CaseType.CIVIL);
+        // First add a case and client
+        Case caseEntity = new Case("DV2023-007", "Case to Add Client", CaseType.CIVIL);
         caseDAO.create(caseEntity);
 
         Client client = new Client("Jane", "Doe", "jane.doe@example.com");
         clientDAO.create(client);
 
-        // Düzenleme - Scanner'ı "5. Davaya Müvekkil Ekle" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("5\n" + caseEntity.getId() + "\n" + client.getId() + "\n\n9\n"));
+        // Setup - Configure Scanner to select "5. Add Client to Case" option
+        UiConsoleHelper.setScanner(new Scanner("5\n" + caseEntity.getId() + "\n" + client.getId() + "\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Müvekkil davaya eklendi mi?
+        // Verification - Was the client added to the case?
         List<Client> clients = caseService.getClientsForCase(caseEntity.getId());
-        assertFalse("Müvekkil listesi boş olmamalı", clients.isEmpty());
-        assertEquals("Müvekkil ID'si doğru olmalı", client.getId(), clients.get(0).getId());
+        assertFalse("Client list should not be empty", clients.isEmpty());
+        assertEquals("Client ID should be correct", client.getId(), clients.get(0).getId());
     }
 
     @Test
     public void Test_Display_SelectRemoveClientFromCase_Success() throws SQLException {
-        // Önce bir dava ve müvekkil ekleyelim ve ilişkilendirelim
-        Case caseEntity = new Case("DV2023-008", "Müvekkil Çıkarılacak Dava", CaseType.FAMILY);
+        // First add a case and client and associate them
+        Case caseEntity = new Case("DV2023-008", "Case to Remove Client", CaseType.FAMILY);
         caseDAO.create(caseEntity);
 
         Client client = new Client("Bob", "Smith", "bob.smith@example.com");
@@ -274,135 +275,136 @@ public class CaseMenuTest {
 
         caseService.addClientToCase(caseEntity.getId(), client.getId());
 
-        // İlişki kuruldu mu kontrol edelim
+        // Check if relationship was established
         List<Client> initialClients = caseService.getClientsForCase(caseEntity.getId());
-        assertFalse("Başlangıçta müvekkil listesi boş olmamalı", initialClients.isEmpty());
+        assertFalse("Initial client list should not be empty", initialClients.isEmpty());
 
-        // Düzenleme - Scanner'ı "6. Davadan Müvekkil Çıkar" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("6\n" + caseEntity.getId() + "\n" + client.getId() + "\n\n9\n6\n"));
+        // Setup - Configure Scanner to select "6. Remove Client from Case" option
+        UiConsoleHelper.setScanner(new Scanner("6\n" + caseEntity.getId() + "\n" + client.getId() + "\n\n9\n6\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Müvekkil davadan çıkarıldı mı?
+        // Verification - Was the client removed from the case?
         List<Client> finalClients = caseService.getClientsForCase(caseEntity.getId());
-        assertTrue("Müvekkil listesi boş olmalı", finalClients.isEmpty());
+        assertTrue("Client list should be empty", finalClients.isEmpty());
     }
 
     @Test
     public void Test_Display_SelectListCasesByStatus_Success() throws SQLException {
-        // Farklı durumlarda birkaç dava ekleyelim
-        Case case1 = new Case("DV2023-009", "Aktif Dava 1", CaseType.CIVIL);
+        // Add some cases with different statuses
+        Case case1 = new Case("DV2023-009", "Active Case 1", CaseType.CIVIL);
         case1.setStatus(CaseStatus.ACTIVE);
         caseDAO.create(case1);
 
-        Case case2 = new Case("DV2023-010", "Aktif Dava 2", CaseType.CRIMINAL);
+        Case case2 = new Case("DV2023-010", "Active Case 2", CaseType.CRIMINAL);
         case2.setStatus(CaseStatus.ACTIVE);
         caseDAO.create(case2);
 
-        Case case3 = new Case("DV2023-011", "Kapalı Dava", CaseType.FAMILY);
+        Case case3 = new Case("DV2023-011", "Closed Case", CaseType.FAMILY);
         case3.setStatus(CaseStatus.CLOSED);
         caseDAO.create(case3);
 
-        // Düzenleme - Scanner'ı "7. Durum Bazında Davaları Listele" seçeneğini seçecek şekilde ayarlama
-        // ACTIVE durumunu seçiyoruz
-        ConsoleHelper.setScanner(new Scanner("7\n2\n\n9\n\n6\n")); // 2 = ACTIVE enum değeri
+        // Setup - Configure Scanner to select "7. List Cases by Status" option
+        // Select ACTIVE status
+        UiConsoleHelper.setScanner(new Scanner("7\n2\n\n9\n\n6\n")); // 2 = ACTIVE enum value
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Çıktıda aktif davalar listelenmiş mi?
+        // Verification - Are active cases listed in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda Aktif Dava 1 olmalı", output.contains("Aktif Dava 1"));
-        assertTrue("Çıktıda Aktif Dava 2 olmalı", output.contains("Aktif Dava 2"));
-        assertFalse("Çıktıda Kapalı Dava olmamalı", output.contains("Kapalı Dava"));
+        assertTrue("Output should contain Active Case 1", output.contains("Active Case 1"));
+        assertTrue("Output should contain Active Case 2", output.contains("Active Case 2"));
+        assertFalse("Output should not contain Closed Case", output.contains("Closed Case"));
     }
 
     @Test
     public void Test_Display_SelectViewAllCases_Success() throws SQLException {
-        // Birkaç dava ekleyelim
-        Case case1 = new Case("DV2023-012", "Test Davası A", CaseType.CIVIL);
+        // Add some cases
+        Case case1 = new Case("DV2023-012", "Test Case A", CaseType.CIVIL);
         caseDAO.create(case1);
 
-        Case case2 = new Case("DV2023-013", "Test Davası B", CaseType.CRIMINAL);
+        Case case2 = new Case("DV2023-013", "Test Case B", CaseType.CRIMINAL);
         caseDAO.create(case2);
 
-        // Düzenleme - Scanner'ı "8. Tüm Davaları Listele" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("8\n\n9\n6\n"));
+        // Setup - Configure Scanner to select "8. List All Cases" option
+        UiConsoleHelper.setScanner(new Scanner("8\n\n9\n6\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - Çıktıda tüm davalar listelenmiş mi?
+        // Verification - Are all cases listed in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda Test Davası A olmalı", output.contains("Test Davası A"));
-        assertTrue("Çıktıda Test Davası B olmalı", output.contains("Test Davası B"));
+        assertTrue("Output should contain Test Case A", output.contains("Test Case A"));
+        assertTrue("Output should contain Test Case B", output.contains("Test Case B"));
     }
 
     @Test
     public void Test_Display_SelectReturnToMainMenu() {
-        // Düzenleme - Scanner'ı "9. Ana Menüye Dön" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("9\n"));
+        // Setup - Configure Scanner to select "9. Return to Main Menu" option
+        UiConsoleHelper.setScanner(new Scanner("9\n"));
 
-        // İşlem
+        // Action
         caseMenu.display();
 
-        // Doğrulama - MenuManager'ın navigateToMainMenu metodu çağrıldı mı kontrol edilebilir
-        assertTrue("Ana menüye dönüş çağrılmalı", ((TestMenuManager)menuManager).isNavigatedToMainMenu());
+        // Verification - Check if MenuManager's navigateToMainMenu method was called
+        assertTrue("Should return to main menu", ((TestConsoleMenuManager) consoleMenuManager).isNavigatedToMainMenu());
     }
+
     @Test
     public void Test_AddCase_WithDuplicateCaseNumber_ShowsError() throws SQLException {
-        // Var olan bir dava numarası oluştur
-        Case existingCase = new Case("DV2023-DUPLICATE", "Mevcut Dava", CaseType.CIVIL);
+        // Create an existing case number
+        Case existingCase = new Case("DV2023-DUPLICATE", "Existing Case", CaseType.CIVIL);
         caseDAO.create(existingCase);
 
-        // Düzenleme - Scanner'ı aynı dava numarası ile ayarla
-        ConsoleHelper.setScanner(new Scanner("DV2023-DUPLICATE\nDuplicate Test\n1\nTest açıklaması\nn\n\n9\n"));
+        // Setup - Configure Scanner with same case number
+        UiConsoleHelper.setScanner(new Scanner("DV2023-DUPLICATE\nDuplicate Test\n1\nTest description\nn\n\n9\n"));
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.addCase();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda hata mesajı olmalı", output.contains("ERROR"));
-        assertTrue("Çıktıda 'already in use' mesajı olmalı", output.contains("already in use"));
+        assertTrue("Output should contain error message", output.contains("ERROR"));
+        assertTrue("Output should contain 'already in use' message", output.contains("already in use"));
     }
 
     @Test
     public void Test_ViewCaseDetails_WithAssociatedClients_ShowsClients() throws SQLException {
-        // Bir dava oluştur
-        Case caseEntity = new Case("DV2023-WITH-CLIENTS", "Müvekkilli Dava", CaseType.CIVIL);
+        // Create a case
+        Case caseEntity = new Case("DV2023-WITH-CLIENTS", "Case with Client", CaseType.CIVIL);
         caseDAO.create(caseEntity);
 
-        // Bir müvekkil oluştur ve dava ile ilişkilendir
+        // Create a client and associate with case
         Client client = new Client("Test", "Client", "test.client@example.com");
         clientDAO.create(client);
 
-        // Müvekkili dava ile ilişkilendir
+        // Associate client with case
         caseService.addClientToCase(caseEntity.getId(), client.getId());
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // ÖNEMLİ: Çıktıyı yakalamadan önce müvekkillerin doğru yüklendiğini kontrol et
+        // IMPORTANT: Check if clients are loaded correctly before capturing output
         List<Client> clientList = caseService.getClientsForCase(caseEntity.getId());
-        assertFalse("Müvekkil listesi boş olmamalı", clientList.isEmpty());
+        assertFalse("Client list should not be empty", clientList.isEmpty());
 
-        // Scanner'ı ayarla - fazladan boş satırlar ekle
-        ConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n\n\n\n9\n"));
+        // Setup Scanner - add extra empty lines
+        UiConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n\n\n\n9\n"));
 
-        // İşlem
+        // Action
         caseMenu.viewCaseDetails();
 
-        // Doğrulama - çıktıyı daha esnek bir şekilde kontrol et
+        // Verification - check output more flexibly
         String output = outContent.toString();
-        System.out.println("ÇIKTI: " + output);
+        System.out.println("OUTPUT: " + output);
 
-        // Müvekkil ile ilgili herhangi bir içerik var mı kontrol et
-        assertTrue("Çıktıda müvekkil bilgileri olmalı",
+        // Check if there is any content related to client
+        assertTrue("Output should contain client information",
                 output.contains("Client") ||
                         output.contains("client") ||
                         output.contains("Test"));
@@ -410,77 +412,77 @@ public class CaseMenuTest {
 
     @Test
     public void Test_UpdateCase_NonExistentCase_ShowsError() {
-        // Düzenleme - Varolmayan bir dava ID'si kullan
+        // Setup - Use non-existent case ID
         long nonExistentId = 9999L;
-        ConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
+        UiConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.updateCase();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Case not found' mesajı olmalı", output.contains("not found"));
+        assertTrue("Output should contain 'Case not found' message", output.contains("not found"));
     }
 
     @Test
     public void Test_AddClientToCase_AlreadyAddedClient_ShowsWarning() throws SQLException {
-        // Bir dava ve müvekkil oluştur
-        Case caseEntity = new Case("DV2023-012", "Test Davası", CaseType.CIVIL);
+        // Create a case and client
+        Case caseEntity = new Case("DV2023-012", "Test Case", CaseType.CIVIL);
         caseDAO.create(caseEntity);
 
         Client client = new Client("Duplicate", "Client", "duplicate@example.com");
         clientDAO.create(client);
 
-        // İlk kez ekle
+        // Add first time
         caseService.addClientToCase(caseEntity.getId(), client.getId());
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // ÖNEMLİ: Yeni bir Scanner nesnesi oluştur - daha uzun bekleme süresi için ek boş satırlar ekle
-        ConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n" + client.getId() + "\n\n\n\n"));
+        // IMPORTANT: Create new Scanner object - add extra empty lines for longer wait time
+        UiConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n" + client.getId() + "\n\n\n\n"));
 
-        // İşlem - doğrudan CaseMenu'deki metodu çağırıyoruz
-        // addClientToCase() yerine addClientToCase(Long caseId) metodunu çağırıyoruz
+        // Action - call method directly in CaseMenu
+        // Call addClientToCase(Long caseId) method instead of addClientToCase()
         caseMenu.addClientToCase(caseEntity.getId());
 
-        // Doğrulama - Çıktıda "This client is already added to the case" mesajı var mı?
+        // Verification - Is there a "This client is already added to the case" message in the output?
         String output = outContent.toString();
-        System.out.println("ÇIKTI: " + output);
+        System.out.println("OUTPUT: " + output);
 
-        // Tam olarak WARNING kelimesini değil, mesaj içeriğini kontrol edelim
-        assertTrue("Çıktıda 'already added to the case' mesajı olmalı",
+        // Check message content instead of exact WARNING word
+        assertTrue("Output should contain 'already added to the case' message",
                 output.contains("already added to the case") ||
                         output.contains("already associated with"));
     }
 
     @Test
     public void Test_RemoveClientFromCase_EmptyClientList_ShowsMessage() throws SQLException {
-        // Bir dava oluştur ama müvekkil ekleme
-        Case caseEntity = new Case("DV2023-014", "Müvekkili Olmayan Dava", CaseType.CIVIL);
+        // Create a case but don't add any clients
+        Case caseEntity = new Case("DV2023-014", "Case without Client", CaseType.CIVIL);
         caseDAO.create(caseEntity);
 
-        // Düzenleme - Scanner'ı ayarla
-        ConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n\n9\n"));
+        // Setup - Configure Scanner
+        UiConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n\n9\n"));
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.removeClientFromCase();
 
-        // Doğrulama - Çıktıda bilgi mesajı var mı?
+        // Verification - Is there an info message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda müvekkil yok mesajı olmalı", output.contains("no clients associated"));
+        assertTrue("Output should contain no clients message", output.contains("no clients associated"));
     }
 
     @Test
     public void Test_RemoveClientFromCase_NonExistentClient_ShowsError() throws SQLException {
-        // Bir dava ve müvekkil oluştur
-        Case caseEntity = new Case("DV2023-015", "Test Davası", CaseType.CIVIL);
+        // Create a case and client
+        Case caseEntity = new Case("DV2023-015", "Test Case", CaseType.CIVIL);
         caseDAO.create(caseEntity);
 
         Client client = new Client("Real", "Client", "real@example.com");
@@ -488,81 +490,81 @@ public class CaseMenuTest {
 
         caseService.addClientToCase(caseEntity.getId(), client.getId());
 
-        // Varolmayan müvekkil ID'si
+        // Non-existent client ID
         long nonExistentClientId = 9999L;
 
-        // Düzenleme - var olmayan bir müvekkil ID'si kullan
-        ConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n" + nonExistentClientId + "\n\n9\n"));
+        // Setup - Use non-existent client ID
+        UiConsoleHelper.setScanner(new Scanner(caseEntity.getId() + "\n" + nonExistentClientId + "\n\n9\n"));
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.removeClientFromCase();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda ilişkili değil mesajı olmalı", output.contains("not associated with this case"));
+        assertTrue("Output should contain not associated message", output.contains("not associated with this case"));
     }
 
     @Test
     public void Test_ListCasesByStatus_NoMatchingCases_ShowsMessage() throws SQLException {
-        // Sadece ACTIVE durumunda bir dava oluştur
-        Case caseEntity = new Case("DV2023-016", "Aktif Dava", CaseType.CIVIL);
+        // Create a case only with ACTIVE status
+        Case caseEntity = new Case("DV2023-016", "Active Case", CaseType.CIVIL);
         caseEntity.setStatus(CaseStatus.ACTIVE);
         caseDAO.create(caseEntity);
 
-        // CLOSED durumu için Scanner'ı ayarla (CaseStatus enumındaki pozisyona göre)
-        ConsoleHelper.setScanner(new Scanner("4\n\n9\n")); // 4 = CLOSED enum değeri olduğunu varsayıyorum
+        // Setup Scanner for CLOSED status (based on CaseStatus enum position)
+        UiConsoleHelper.setScanner(new Scanner("4\n\n9\n")); // Assuming 4 is the CLOSED enum value
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.listCasesByStatus();
 
-        // Doğrulama - Çıktıda bilgi mesajı var mı?
+        // Verification - Is there an info message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda dava bulunamadı mesajı olmalı", output.contains("No cases found"));
+        assertTrue("Output should contain no cases found message", output.contains("No cases found"));
     }
 
     @Test
     public void Test_ViewAllCases_NoCasesInDatabase_ShowsMessage() throws SQLException {
-        // Tüm davaları silmeliyiz
-        // Önce var olan tüm davaları al ve sil
+        // We need to delete all cases
+        // First get and delete all existing cases
         List<Case> allCases = caseService.getAllCases();
         for (Case c : allCases) {
             caseDAO.delete(c);
         }
 
-        // Düzenleme - Scanner'ı ayarla
-        ConsoleHelper.setScanner(new Scanner("8\n\n9\n"));
+        // Setup - Configure Scanner
+        UiConsoleHelper.setScanner(new Scanner("8\n\n9\n"));
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.viewAllCases();
 
-        // Doğrulama - Çıktıda bilgi mesajı var mı?
+        // Verification - Is there an info message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda dava yok mesajı olmalı", output.contains("no registered cases"));
+        assertTrue("Output should contain no cases message", output.contains("no registered cases"));
     }
 
     @Test
     public void Test_DeleteCase_NonExistentCase_ShowsError() {
-        // Düzenleme - Varolmayan bir dava ID'si kullan
+        // Setup - Use non-existent case ID
         long nonExistentId = 9999L;
-        ConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
+        UiConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
 
-        // Test öncesi çıktıyı temizle
+        // Clear output before test
         outContent.reset();
 
-        // İşlem
+        // Action
         caseMenu.deleteCase();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Case not found' mesajı olmalı", output.contains("not found"));
+        assertTrue("Output should contain 'Case not found' message", output.contains("not found"));
     }
 }

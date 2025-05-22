@@ -1,8 +1,6 @@
 package com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.menu;
 
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.CaseDAO;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.DocumentDAO;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.UserDAO;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.*;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.Case;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.Document;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.User;
@@ -10,8 +8,9 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.CaseType;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.DocumentType;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.UserRole;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.*;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.ConsoleHelper;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.MenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.UiConsoleHelper;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.ConsoleMenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu.DocumentMenu;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.util.TestDatabaseManager;
 import org.junit.After;
 import org.junit.Before;
@@ -21,40 +20,42 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 import static org.junit.Assert.*;
 
 public class DocumentMenuTest {
 
-    private MenuManager menuManager;
+    private ConsoleMenuManager consoleMenuManager;
     private DocumentMenu documentMenu;
     private DocumentService documentService;
     private CaseService caseService;
     private AuthService authService;
+    private ClientService clientService;
+    private HearingService hearingService;
 
     private DocumentDAO documentDAO;
     private CaseDAO caseDAO;
     private UserDAO userDAO;
+    private ClientDAO clientDAO;
 
-    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
-    // MenuManager'ı test için genişleten iç sınıf
-    private class TestMenuManager extends MenuManager {
+    // Inner class that extends MenuManager for testing
+    private class TestConsoleMenuManager extends ConsoleMenuManager {
         private boolean navigatedToMainMenu = false;
 
-        public TestMenuManager(AuthService authService, ClientService clientService,
-                               CaseService caseService, HearingService hearingService,
-                               DocumentService documentService) {
+        public TestConsoleMenuManager(AuthService authService, ClientService clientService,
+                                      CaseService caseService, HearingService hearingService,
+                                      DocumentService documentService) {
             super(authService, clientService, caseService, hearingService, documentService);
         }
 
         @Override
         public void navigateToMainMenu() {
             navigatedToMainMenu = true;
-            // Test için hiçbir şey yapmadan başarılı işaretlenecek
+            // Will be marked as successful without doing anything for testing
         }
 
         public boolean isNavigatedToMainMenu() {
@@ -64,432 +65,344 @@ public class DocumentMenuTest {
 
     @Before
     public void setUp() throws SQLException {
-        // Konsol çıktısını yakalama
+        // Capture console output
+        outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
-        // Test veritabanını kurma
+        // Set up test database
         TestDatabaseManager.createTables();
 
-        // DAO nesnelerini oluşturma
-        documentDAO = new DocumentDAO(TestDatabaseManager.getConnectionSource());
-        caseDAO = new CaseDAO(TestDatabaseManager.getConnectionSource());
+        // Create DAO objects
         userDAO = new UserDAO(TestDatabaseManager.getConnectionSource());
+        clientDAO = new ClientDAO(TestDatabaseManager.getConnectionSource());
+        caseDAO = new CaseDAO(TestDatabaseManager.getConnectionSource());
+        documentDAO = new DocumentDAO(TestDatabaseManager.getConnectionSource());
 
-        // Service nesnelerini oluşturma
-        documentService = new DocumentService(documentDAO, caseDAO);
-        caseService = new CaseService(caseDAO, null); // ClientDAO null olabilir, testlerimiz için gerekli değil
+        // Create service objects
+        caseService = new CaseService(caseDAO, null); // ClientDAO can be null, not needed for our tests
+        clientService = new ClientService(clientDAO);
         authService = new AuthService(userDAO);
+        documentService = new DocumentService(documentDAO, caseDAO);
 
-        // Test kullanıcısı oluşturup giriş yapalım
-        User testUser = authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
+        // Create test user and login
+        authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
         authService.login("testuser", "password");
 
-        // MenuManager'ı test versiyonuyla oluşturma
-        menuManager = new TestMenuManager(authService, null, caseService, null, documentService);
+        // Create MenuManager with test version
+        consoleMenuManager = new TestConsoleMenuManager(authService, clientService, caseService, hearingService, documentService);
 
-        // DocumentMenu nesnesi oluşturma
-        documentMenu = new DocumentMenu(menuManager, documentService, caseService);
+        // Create DocumentMenu object
+        documentMenu = new DocumentMenu(consoleMenuManager, documentService, caseService);
     }
 
     @After
     public void tearDown() throws SQLException {
-        // Konsol çıktısını eski haline getirme
+        // Restore console output
         System.setOut(originalOut);
 
-        // Scanner'ı sıfırlama
-        ConsoleHelper.resetScanner();
+        // Reset Scanner
+        UiConsoleHelper.resetScanner();
 
-        // Test veritabanı bağlantısını kapatma
+        // Close test database connection
         TestDatabaseManager.closeConnection();
     }
 
     @Test
-    public void Test_Display_SelectReturnToMainMenu() {
-        // Düzenleme - Scanner'ı "9. Ana Menüye Dön" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("9\n"));
+    public void Test_Display_SelectReturnToMainMenu_Success() {
+        // Setup - Configure Scanner to select "9. Return to Main Menu" option
+        UiConsoleHelper.setScanner(new Scanner("9\n"));
 
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - MenuManager'ın navigateToMainMenu metodu çağrıldı mı kontrol edilebilir
-        assertTrue("Ana menüye dönüş çağrılmalı", ((TestMenuManager)menuManager).isNavigatedToMainMenu());
+        // Verification - Check if MenuManager's navigateToMainMenu method was called
+        assertTrue("Should return to main menu", ((TestConsoleMenuManager) consoleMenuManager).isNavigatedToMainMenu());
     }
 
     @Test
     public void Test_Display_SelectAddDocument_Success() throws SQLException {
-        // Önce bir dava oluşturalım
-        Case caseEntity = new Case("DOC2023-001", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+        // First create a case
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
 
-        // Düzenleme - Scanner'ı "1. Yeni Belge Ekle" seçeneğini seçecek şekilde ayarlama
-        // Örnek belge bilgileri ve işlem sonunda ana menüye dönme (9)
-        ConsoleHelper.setScanner(new Scanner("1\n" + caseEntity.getId() + "\nTest Belge\n1\nBu bir test belgesidir.\n\n\n9\n"));
+        // Setup - Configure Scanner to select "1. Add New Document" option
+        // Example document information and return to main menu (9)
+        UiConsoleHelper.setScanner(new Scanner("1\n" + testCase.getId() + "\nTest Document\n1\nThis is a test document.\n\n9\n"));
 
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Belge oluşturuldu mu?
-        List<Document> documents = documentService.getDocumentsByCaseId(caseEntity.getId());
-        assertFalse("Belge listesi boş olmamalı", documents.isEmpty());
-        assertEquals("Belge başlığı doğru olmalı", "Test Belge", documents.get(0).getTitle());
-        assertEquals("Belge tipi doğru olmalı", DocumentType.CONTRACT, documents.get(0).getType());
-        assertEquals("Belge içeriği doğru olmalı", "Bu bir test belgesidir.", documents.get(0).getContent());
+        // Verification - Was the document created?
+        List<Document> documents = documentService.getDocumentsByCaseId(testCase.getId());
+        assertFalse("Document list should not be empty", documents.isEmpty());
+        assertEquals("Document title should be correct", "Test Document", documents.get(0).getTitle());
+        assertEquals("Document type should be correct", DocumentType.CONTRACT, documents.get(0).getType());
+        assertEquals("Document content should be correct", "This is a test document.", documents.get(0).getContent());
     }
 
     @Test
-    public void Test_Display_SelectAddDocument_NoCaseExists() {
-        // Hiç dava oluşturmuyoruz
+    public void Test_Display_SelectAddDocument_CaseNotFound_Error() {
+        // Setup - Configure Scanner with non-existent case ID
+        UiConsoleHelper.setScanner(new Scanner("1\n9999\n\n9\n"));
 
-        // Düzenleme - Scanner'ı "1. Yeni Belge Ekle" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("1\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Hata mesajı görüntülendi mi?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Dava oluşturma hatası mesajı gösterilmeli",
-                output.contains("You must create a case first") ||
-                        output.contains("create a case first"));
+        assertTrue("Output should contain 'Case not found' message", output.contains("Case with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectViewDocumentDetails_Success() throws SQLException {
-        // Önce bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-002", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+        // First create a case and document
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document document = documentService.createDocument(testCase.getId(), "Test Document", DocumentType.CONTRACT, "This is a test document.");
 
-        Document document = new Document("Test Belge Detayları", DocumentType.EVIDENCE, caseEntity, "Bu bir test belgesidir.");
-        documentDAO.create(document);
+        // Setup - Configure Scanner to select "2. View Document Details" option
+        UiConsoleHelper.setScanner(new Scanner("2\n" + document.getId() + "\n\n9\n"));
 
-        // Düzenleme - Scanner'ı "2. Belge Detaylarını Görüntüle" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("2\n" + document.getId() + "\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda belge bilgileri var mı?
+        // Verification - Are document details in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda belge başlığı olmalı", output.contains("Test Belge Detayları"));
-        assertTrue("Çıktıda belge tipi olmalı", output.contains("EVIDENCE"));
-        assertTrue("Çıktıda belge içeriği olmalı", output.contains("Bu bir test belgesidir."));
+        assertTrue("Output should contain document ID", output.contains("Document ID: " + document.getId()));
+        assertTrue("Output should contain document title", output.contains("Title: Test Document"));
+        assertTrue("Output should contain document type", output.contains("Type: CONTRACT"));
+        assertTrue("Output should contain document content", output.contains("Content: This is a test document."));
     }
 
     @Test
-    public void Test_Display_SelectViewDocumentDetails_NonExistentDocument() {
-        // Düzenleme - Scanner'ı olmayan bir belge ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("2\n9999\n\n9\n"));
+    public void Test_Display_SelectViewDocumentDetails_NonExistentDocument_NotFound() {
+        // Setup - Configure Scanner with non-existent document ID
+        UiConsoleHelper.setScanner(new Scanner("2\n9999\n\n9\n"));
 
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Belge bulunamadı' mesajı olmalı", output.contains("not found"));
+        assertTrue("Output should contain 'Document not found' message", output.contains("Document with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectUpdateDocument_Success() throws SQLException {
-        // Önce bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-003", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+        // First create a case and document
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document document = documentService.createDocument(testCase.getId(), "Old Title", DocumentType.CONTRACT, "Old content");
 
-        Document document = new Document("Eski Belge Başlığı", DocumentType.CONTRACT, caseEntity, "Eski içerik");
-        documentDAO.create(document);
+        // Setup - Configure Scanner to select "3. Update Document" option
+        // Update all fields
+        UiConsoleHelper.setScanner(new Scanner("3\n" + document.getId() + "\ny\nNew Title\ny\n2\ny\nNew content\n\n9\n"));
 
-        // Düzenleme - Scanner'ı "3. Belge Güncelle" seçeneğini seçecek şekilde ayarlama
-        // Başlık ve içeriği güncelleyelim, tipi aynı kalsın
-        ConsoleHelper.setScanner(new Scanner("3\n" + document.getId() + "\nYeni Belge Başlığı\nn\ny\nYeni içerik.\n\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Belge güncellendi mi?
-        Optional<Document> updatedDoc = documentService.getDocumentById(document.getId());
-        assertTrue("Belge bulunmalı", updatedDoc.isPresent());
-        assertEquals("Belge başlığı güncellenmeli", "Yeni Belge Başlığı", updatedDoc.get().getTitle());
-        assertEquals("Belge tipi aynı kalmalı", DocumentType.CONTRACT, updatedDoc.get().getType());
-        assertEquals("Belge içeriği güncellenmeli", "Yeni içerik.", updatedDoc.get().getContent());
+        // Verification - Was the document updated?
+        Document updatedDocument = documentService.getDocumentById(document.getId()).orElse(null);
+        assertNotNull("Document should be found", updatedDocument);
+        assertEquals("Document title should be updated", "New Title", updatedDocument.getTitle());
+        assertEquals("Document type should be updated", DocumentType.COURT_ORDER, updatedDocument.getType());
+        assertEquals("Document content should be updated", "New content", updatedDocument.getContent());
     }
 
     @Test
-    public void Test_Display_SelectUpdateDocument_UpdateType() throws SQLException {
-        // Önce bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-004", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+    public void Test_Display_SelectUpdateDocument_NonExistentDocument_NotFound() {
+        // Setup - Configure Scanner with non-existent document ID
+        UiConsoleHelper.setScanner(new Scanner("3\n9999\n\n9\n"));
 
-        Document document = new Document("Belge Tipi Değişecek", DocumentType.CONTRACT, caseEntity, "Test içeriği");
-        documentDAO.create(document);
-
-        // Düzenleme - Scanner'ı "3. Belge Güncelle" seçeneğini seçecek şekilde ayarlama
-        // Sadece belge tipini değiştirelim
-        ConsoleHelper.setScanner(new Scanner("3\n" + document.getId() + "\n\ny\n2\nn\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Belge güncellendi mi?
-        Optional<Document> updatedDoc = documentService.getDocumentById(document.getId());
-        assertTrue("Belge bulunmalı", updatedDoc.isPresent());
-        assertEquals("Belge başlığı aynı kalmalı", "Belge Tipi Değişecek", updatedDoc.get().getTitle());
-        assertEquals("Belge tipi güncellenmeli", DocumentType.EVIDENCE, updatedDoc.get().getType()); // EVIDENCE enum değeri 2 konumunda olduğunu varsayarak
-        assertEquals("Belge içeriği aynı kalmalı", "Test içeriği", updatedDoc.get().getContent());
-    }
-
-    @Test
-    public void Test_Display_SelectDeleteDocument_Confirm_Success() throws SQLException {
-        // Önce bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-005", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
-
-        Document document = new Document("Silinecek Belge", DocumentType.CONTRACT, caseEntity, "Silinecek içerik");
-        documentDAO.create(document);
-
-        // Düzenleme - Scanner'ı "4. Belge Sil" seçeneğini seçecek ve onaylayacak şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("4\n" + document.getId() + "\ny\n\n9\n"));
-
-        // İşlem
-        documentMenu.display();
-
-        // Doğrulama - Belge silindi mi?
-        Optional<Document> deletedDoc = documentService.getDocumentById(document.getId());
-        assertFalse("Belge silinmeli", deletedDoc.isPresent());
-    }
-
-    @Test
-    public void Test_Display_SelectDeleteDocument_Cancel_NotDeleted() throws SQLException {
-        // Önce bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-006", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
-
-        Document document = new Document("Silinmeyecek Belge", DocumentType.CONTRACT, caseEntity, "Korunacak içerik");
-        documentDAO.create(document);
-
-        // Düzenleme - Scanner'ı "4. Belge Sil" seçeneğini seçecek ama iptal edecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("4\n" + document.getId() + "\nn\n\n9\n"));
-
-        // İşlem
-        documentMenu.display();
-
-        // Doğrulama - Belge silinmedi mi?
-        Optional<Document> notDeletedDoc = documentService.getDocumentById(document.getId());
-        assertTrue("Belge silinmemeli", notDeletedDoc.isPresent());
-    }
-
-    @Test
-    public void Test_Display_SelectSearchDocumentsByTitle_Success() throws SQLException {
-        // Birkaç dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-007", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
-
-        Document doc1 = new Document("Arama Test Belgesi", DocumentType.CONTRACT, caseEntity, "İçerik 1");
-        documentDAO.create(doc1);
-
-        Document doc2 = new Document("Başka Belge", DocumentType.EVIDENCE, caseEntity, "İçerik 2");
-        documentDAO.create(doc2);
-
-        // Düzenleme - Scanner'ı "5. Başlığa Göre Belge Ara" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("5\nArama\n\n9\n"));
-
-        // İşlem
-        documentMenu.display();
-
-        // Doğrulama - Çıktıda arama sonucu var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Arama Test Belgesi' olmalı", output.contains("Arama Test Belgesi"));
-        assertFalse("Çıktıda 'Başka Belge' olmamalı", output.contains("Başka Belge"));
+        assertTrue("Output should contain 'Document not found' message", output.contains("Document with specified ID not found"));
     }
 
     @Test
-    public void Test_Display_SelectSearchDocumentsByTitle_NoResults() throws SQLException {
-        // Bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-008", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+    public void Test_Display_SelectDeleteDocument_Success() throws SQLException {
+        // First create a case and document
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document document = documentService.createDocument(testCase.getId(), "Test Document", DocumentType.CONTRACT, "This is a test document.");
 
-        Document document = new Document("Örnek Belge", DocumentType.CONTRACT, caseEntity, "İçerik");
-        documentDAO.create(document);
+        // Setup - Configure Scanner to select "4. Delete Document" option
+        UiConsoleHelper.setScanner(new Scanner("4\n" + document.getId() + "\ny\n\n9\n")); // Confirm deletion
 
-        // Düzenleme - Scanner'ı "5. Başlığa Göre Belge Ara" seçeneğini seçecek ve eşleşmeyen bir terim kullanacak şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("5\nBulunamayacak\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda sonuç bulunamadı mesajı var mı?
-        String output = outContent.toString();
-        assertTrue("Çıktıda 'No documents found' mesajı olmalı", output.contains("No documents found"));
+        // Verification - Was the document deleted?
+        assertTrue("Document should be deleted", documentService.getDocumentById(document.getId()).isEmpty());
     }
 
     @Test
-    public void Test_Display_SelectListDocumentsByType_Success() throws SQLException {
-        // Birkaç dava ve farklı tiplerde belgeler oluşturalım
-        Case caseEntity = new Case("DOC2023-009", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+    public void Test_Display_SelectDeleteDocument_Cancelled_NotDeleted() throws SQLException {
+        // First create a case and document
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document document = documentService.createDocument(testCase.getId(), "Test Document", DocumentType.CONTRACT, "This is a test document.");
 
-        Document doc1 = new Document("Contract 1", DocumentType.CONTRACT, caseEntity, "Contract içeriği 1");
-        documentDAO.create(doc1);
+        // Setup - Configure Scanner to select "4. Delete Document" option
+        UiConsoleHelper.setScanner(new Scanner("4\n" + document.getId() + "\nn\n\n9\n")); // Cancel deletion
 
-        Document doc2 = new Document("Contract 2", DocumentType.CONTRACT, caseEntity, "Contract içeriği 2");
-        documentDAO.create(doc2);
-
-        Document doc3 = new Document("Evidence 1", DocumentType.EVIDENCE, caseEntity, "Evidence içeriği");
-        documentDAO.create(doc3);
-
-        // Düzenleme - Scanner'ı "6. Tipe Göre Belgeleri Listele" seçeneğini ve CONTRACT tipini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("6\n1\n\n9\n")); // 1 = CONTRACT enum değeri olduğunu varsayarak
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda CONTRACT tipleri var mı ve EVIDENCE tipi yok mu?
+        // Verification - Was the document not deleted?
+        assertTrue("Document should not be deleted", documentService.getDocumentById(document.getId()).isPresent());
+
+        // Is there a cancellation message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Contract 1' olmalı", output.contains("Contract 1"));
-        assertTrue("Çıktıda 'Contract 2' olmalı", output.contains("Contract 2"));
-        assertFalse("Çıktıda 'Evidence 1' olmamalı", output.contains("Evidence 1"));
+        assertTrue("Output should contain 'Operation cancelled' message", output.contains("Operation cancelled"));
+    }
+
+    @Test
+    public void Test_Display_SelectViewDocumentsByCase_Success() throws SQLException {
+        // First create a case and documents
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document doc1 = documentService.createDocument(testCase.getId(), "Document 1", DocumentType.CONTRACT, "Content 1");
+        Document doc2 = documentService.createDocument(testCase.getId(), "Document 2", DocumentType.COURT_ORDER, "Content 2");
+
+        // Setup - Configure Scanner to select "5. List Documents by Case" option
+        UiConsoleHelper.setScanner(new Scanner("5\n" + testCase.getId() + "\n\n9\n"));
+
+        // Action
+        documentMenu.display();
+
+        // Verification - Are documents in the output?
+        String output = outContent.toString();
+        assertTrue("Output should contain document 1 ID", output.contains("ID: " + doc1.getId()));
+        assertTrue("Output should contain document 2 ID", output.contains("ID: " + doc2.getId()));
+    }
+
+    @Test
+    public void Test_Display_SelectViewDocumentsByType_Success() throws SQLException {
+        // First create a case and documents of different types
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document contract = documentService.createDocument(testCase.getId(), "Contract Doc", DocumentType.CONTRACT, "Contract content");
+        Document order = documentService.createDocument(testCase.getId(), "Order Doc", DocumentType.COURT_ORDER, "Order content");
+
+        // Setup - Configure Scanner to select "6. List Documents by Type" option
+        UiConsoleHelper.setScanner(new Scanner("6\n1\n\n9\n")); // 1 = CONTRACT type
+
+        // Action
+        documentMenu.display();
+
+        // Verification - Are only CONTRACT type documents in the output?
+        String output = outContent.toString();
+        assertTrue("Output should contain contract document ID", output.contains("ID: " + contract.getId()));
+        assertFalse("Output should not contain order document ID", output.contains("ID: " + order.getId()));
+    }
+
+    @Test
+    public void Test_Display_SelectSearchDocuments_Success() throws SQLException {
+        // First create a case and documents with specific keywords
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document doc1 = documentService.createDocument(testCase.getId(), "Important Contract", DocumentType.CONTRACT, "This is an important contract");
+        Document doc2 = documentService.createDocument(testCase.getId(), "Regular Order", DocumentType.COURT_ORDER, "This is a regular order");
+
+        // Setup - Configure Scanner to select "7. Search Documents" option
+        UiConsoleHelper.setScanner(new Scanner("7\nimportant\n\n9\n"));
+
+        // Action
+        documentMenu.display();
+
+        // Verification - Are only documents with "important" keyword in the output?
+        String output = outContent.toString();
+        assertTrue("Output should contain document with 'important' keyword", output.contains("ID: " + doc1.getId()));
+        assertFalse("Output should not contain document without 'important' keyword", output.contains("ID: " + doc2.getId()));
     }
 
     @Test
     public void Test_Display_SelectListDocumentsByCase_Success() throws SQLException {
-        // İki farklı dava ve her davaya ait belgeler oluşturalım
-        Case case1 = new Case("DOC2023-010", "Dava 1", CaseType.CIVIL);
-        caseDAO.create(case1);
+        // First create two cases with different documents
+        String caseNumber1 = "DOC2023-001";
+        String caseTitle1 = "Test Case 1";
+        Case testCase1 = caseService.createCase(caseNumber1, caseTitle1, CaseType.CIVIL, "Test case 1 description");
+        Document doc1 = documentService.createDocument(testCase1.getId(), "Case 1 Document", DocumentType.CONTRACT, "This is a document for case 1");
 
-        Case case2 = new Case("DOC2023-011", "Dava 2", CaseType.CRIMINAL);
-        caseDAO.create(case2);
+        String caseNumber2 = "DOC2023-002";
+        String caseTitle2 = "Test Case 2";
+        Case testCase2 = caseService.createCase(caseNumber2, caseTitle2, CaseType.CRIMINAL, "Test case 2 description");
+        Document doc2 = documentService.createDocument(testCase2.getId(), "Case 2 Document", DocumentType.EVIDENCE, "This is a document for case 2");
 
-        Document doc1 = new Document("Dava 1 Belgesi", DocumentType.CONTRACT, case1, "İçerik 1");
-        documentDAO.create(doc1);
+        // Setup - Configure Scanner to select "7. List Documents by Case" option
+        UiConsoleHelper.setScanner(new Scanner("7\n" + testCase1.getId() + "\n\n9\n"));
 
-        Document doc2 = new Document("Dava 2 Belgesi", DocumentType.EVIDENCE, case2, "İçerik 2");
-        documentDAO.create(doc2);
-
-        // Düzenleme - Scanner'ı "7. Davaya Göre Belgeleri Listele" seçeneğini ve case1'i seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("7\n" + case1.getId() + "\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda case1'e ait belge var mı ve case2'ye ait belge yok mu?
+        // Verification - Are only documents for selected case in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Dava 1 Belgesi' olmalı", output.contains("Dava 1 Belgesi"));
-        assertFalse("Çıktıda 'Dava 2 Belgesi' olmamalı", output.contains("Dava 2 Belgesi"));
+        assertTrue("Output should contain document for case 1", output.contains("ID: " + doc1.getId()));
+        assertTrue("Output should contain document title for case 1", output.contains("Title: Case 1 Document"));
+        assertTrue("Output should contain document type for case 1", output.contains("Type: CONTRACT"));
+        assertFalse("Output should not contain document for case 2", output.contains("ID: " + doc2.getId()));
+        assertFalse("Output should not contain document title for case 2", output.contains("Title: Case 2 Document"));
     }
 
     @Test
-    public void Test_Display_SelectListDocumentsByCase_NoCases() {
-        // Hiç dava oluşturmuyoruz
+    public void Test_Display_SelectListDocumentsByCase_EmptyCase_NoDocuments() throws SQLException {
+        // Create a case without documents
+        String caseNumber = "DOC2023-003";
+        String caseTitle = "Empty Case";
+        Case emptyCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Empty case description");
 
-        // Düzenleme - Scanner'ı "7. Davaya Göre Belgeleri Listele" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("7\n\n9\n"));
+        // Setup - Configure Scanner to select "7. List Documents by Case" option
+        UiConsoleHelper.setScanner(new Scanner("7\n" + emptyCase.getId() + "\n\n9\n"));
 
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda dava bulunamadı mesajı var mı?
+        // Verification - Is the appropriate message displayed?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'There are no registered cases' mesajı olmalı",
-                output.contains("no registered cases") ||
-                        output.contains("No registered cases"));
+        assertTrue("Output should indicate no documents for case", output.contains("There are no documents for this case"));
     }
 
     @Test
-    public void Test_Display_SelectListDocumentsByCase_NoDocuments() throws SQLException {
-        // Bir dava oluşturalım ama belge eklememeelim
-        Case caseEntity = new Case("DOC2023-012", "Belgesi Olmayan Dava", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+    public void Test_Display_SelectListDocumentsByCase_InvalidCase_Error() {
+        // Setup - Configure Scanner with non-existent case ID
+        UiConsoleHelper.setScanner(new Scanner("7\n9999\n\n9\n"));
 
-        // Düzenleme - Scanner'ı "7. Davaya Göre Belgeleri Listele" seçeneğini ve caseEntity'yi seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("7\n" + caseEntity.getId() + "\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda belge bulunamadı mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'There are no documents for this case' mesajı olmalı",
-                output.contains("no documents for this case") ||
-                        output.contains("No documents for this case"));
+        assertTrue("Output should contain error message", output.contains("Error occurred while listing documents"));
     }
 
     @Test
-    public void Test_Display_SelectViewAllDocuments_Success() throws SQLException {
-        // Bir dava ve belge oluşturalım
-        Case caseEntity = new Case("DOC2023-013", "Test Davası", CaseType.CIVIL);
-        caseDAO.create(caseEntity);
+    public void Test_Display_SelectExportDocument_Success() throws SQLException {
+        // First create a case and document
+        String caseNumber = "DOC2023-001";
+        String caseTitle = "Test Case";
+        Case testCase = caseService.createCase(caseNumber, caseTitle, CaseType.CIVIL, "Test case description");
+        Document document = documentService.createDocument(testCase.getId(), "Test Document", DocumentType.CONTRACT, "This is a test document.");
 
-        Document document = new Document("Tüm Belgeler Testi", DocumentType.CONTRACT, caseEntity, "İçerik");
-        documentDAO.create(document);
+        // Setup - Configure Scanner to select "8. Export Document" option
+        UiConsoleHelper.setScanner(new Scanner("8\n" + document.getId() + "\n\n9\n"));
 
-        // Düzenleme - Scanner'ı "8. Tüm Belgeleri Listele" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("8\n\n9\n"));
-
-        // İşlem
+        // Action
         documentMenu.display();
 
-        // Doğrulama - Çıktıda belge bilgileri var mı?
+        // Verification - Is there a success message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Tüm Belgeler Testi' olmalı", output.contains("Tüm Belgeler Testi"));
-    }
-
-    @Test
-    public void Test_Display_SelectViewAllDocuments_NoDocuments() {
-        // Hiç belge oluşturmuyoruz
-
-        // Düzenleme - Scanner'ı "8. Tüm Belgeleri Listele" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("8\n\n9\n"));
-
-        // İşlem
-        documentMenu.display();
-
-        // Doğrulama - Çıktıda belge bulunamadı mesajı var mı?
-        String output = outContent.toString();
-        assertTrue("Çıktıda 'There are no registered documents' mesajı olmalı",
-                output.contains("no registered documents") ||
-                        output.contains("No registered documents"));
-    }
-
-    @Test
-    public void Test_ViewDocumentDetails_NonExistentDocument() {
-        // Düzenleme - Varolmayan bir belge ID'si kullan
-        long nonExistentId = 9999L;
-        ConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
-
-        // İşlem
-        documentMenu.viewDocumentDetails();
-
-        // Doğrulama - Çıktıda belge bulunamadı hatası var mı?
-        String output = outContent.toString();
-        assertTrue("Çıktıda 'Document with specified ID not found' mesajı olmalı",
-                output.contains("not found"));
-    }
-
-    @Test
-    public void Test_UpdateDocument_NonExistentDocument() {
-        // Düzenleme - Varolmayan bir belge ID'si kullan
-        long nonExistentId = 9999L;
-        ConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
-
-        // İşlem
-        documentMenu.updateDocument();
-
-        // Doğrulama - Çıktıda belge bulunamadı hatası var mı?
-        String output = outContent.toString();
-        assertTrue("Çıktıda 'Document with specified ID not found' mesajı olmalı",
-                output.contains("not found"));
-    }
-
-    @Test
-    public void Test_DeleteDocument_NonExistentDocument() {
-        // Düzenleme - Varolmayan bir belge ID'si kullan
-        long nonExistentId = 9999L;
-        ConsoleHelper.setScanner(new Scanner(nonExistentId + "\n\n9\n"));
-
-        // İşlem
-        documentMenu.deleteDocument();
-
-        // Doğrulama - Çıktıda belge bulunamadı hatası var mı?
-        String output = outContent.toString();
-        assertTrue("Çıktıda 'Document with specified ID not found' mesajı olmalı",
-                output.contains("not found"));
+        assertTrue("Output should contain export success message", output.contains("Document exported successfully"));
     }
 }

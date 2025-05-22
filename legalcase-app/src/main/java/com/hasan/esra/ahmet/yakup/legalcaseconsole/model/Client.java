@@ -15,7 +15,6 @@ package com.hasan.esra.ahmet.yakup.legalcaseconsole.model;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -29,8 +28,14 @@ import java.util.List;
 @DatabaseTable(tableName = "clients")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Client extends BaseEntity {
+
+    /**
+     * @brief Explicit no-arg constructor required by ORMLite
+     */
+    public Client() {
+        super();
+    }
 
     /**
      * @brief First name of the client
@@ -98,6 +103,86 @@ public class Client extends BaseEntity {
         this.name = name;
         this.surname = surname;
         this.email = email;
+    }
+
+    /**
+     * @brief Get the name of the client
+     * @return String containing the client's name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @brief Set the name of the client
+     * @param name The name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @brief Get the surname of the client
+     * @return String containing the client's surname
+     */
+    public String getSurname() {
+        return surname;
+    }
+
+    /**
+     * @brief Set the surname of the client
+     * @param surname The surname to set
+     */
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    /**
+     * @brief Get the email of the client
+     * @return String containing the client's email
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @brief Set the email of the client
+     * @param email The email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * @brief Get the phone number of the client
+     * @return String containing the client's phone number
+     */
+    public String getPhone() {
+        return phone;
+    }
+
+    /**
+     * @brief Set the phone number of the client
+     * @param phone The phone number to set
+     */
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    /**
+     * @brief Get the address of the client
+     * @return String containing the client's address
+     */
+    public String getAddress() {
+        return address;
+    }
+
+    /**
+     * @brief Set the address of the client
+     * @param address The address to set
+     */
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     /**

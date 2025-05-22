@@ -51,21 +51,21 @@ public class AuthService {
             // Check if username is already taken
             Optional<User> existingUser = userDAO.getByUsername(username);
             if (existingUser.isPresent()) {
-                throw new IllegalArgumentException("Username already exists");
+                throw new IllegalArgumentException("This username is already taken");
             }
 
             // Check if email is already in use
             Optional<User> existingEmail = userDAO.getByEmail(email);
             if (existingEmail.isPresent()) {
-                throw new IllegalArgumentException("Email address is already in use");
+                throw new IllegalArgumentException("This email address is already in use");
             }
 
             // Create the new user
             User user = new User(username, password, email, name, surname, role);
             return userDAO.create(user);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error during user registration", e);
-            throw new RuntimeException("Could not register user", e);
+            LOGGER.log(Level.SEVERE, "Error occurred during user registration", e);
+            throw new RuntimeException("User could not be registered", e);
         }
     }
 
@@ -84,19 +84,19 @@ public class AuthService {
 
                 // Check if account is enabled
                 if (!user.isEnabled()) {
-                    LOGGER.warning("Login attempt for disabled account: " + username);
+                    LOGGER.warning("Disabled account login attempt: " + username);
                     return false;
                 }
 
                 // Check if password matches
-                if (password.equals(user.getPassword())) {
+                if (user.checkPassword(password)) {
                     this.currentUser = user;
-                    LOGGER.info("User logged in: " + username);
+                    LOGGER.log(Level.FINE, "User logged in: " + username);
                     return true;
                 }
             }
 
-            LOGGER.warning("Failed login attempt: " + username);
+            LOGGER.log(Level.FINE, "Failed login attempt: " + username);
             return false;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error during login", e);
@@ -109,7 +109,7 @@ public class AuthService {
      */
     public void logout() {
         if (this.currentUser != null) {
-            LOGGER.info("User logged out: " + this.currentUser.getUsername());
+            LOGGER.log(Level.FINE, "User logged out: " + this.currentUser.getUsername());
             this.currentUser = null;
         }
     }
