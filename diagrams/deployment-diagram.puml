@@ -1,0 +1,21 @@
+@startuml Deployment Diagram
+
+node "Client Computer" as clientPC {
+  artifact "Java Runtime Environment" as jre
+  artifact "Legal Case Management App" as app
+}
+
+node "Database Server" as dbServer {
+  artifact "SQLite Database Engine" as dbEngine
+  artifact "Legal Case Database" as legalCaseDB
+}
+
+node "Document Storage" as docStorage {
+  artifact "File System" as fs
+  artifact "Case Documents" as docs
+}
+
+clientPC -- dbServer : JDBC
+clientPC -- docStorage : File I/O
+
+@enduml

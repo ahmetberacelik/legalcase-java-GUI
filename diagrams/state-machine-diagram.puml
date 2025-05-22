@@ -1,0 +1,27 @@
+@startuml UML State Machine Diagram
+
+' Define the states for a legal case
+[*] --> New : Case Created
+
+state New {
+  [*] --> Initial : Case Number Assigned
+  Initial --> Review : Documents Submitted
+  Review --> Initial : Additional Documents Requested
+}
+
+New --> Open : Case Accepted
+Open --> InProgress : Investigation Started
+InProgress --> OnHold : Awaiting Information
+OnHold --> InProgress : Information Received
+InProgress --> Scheduled : Hearing Scheduled
+Scheduled --> InProgress : Hearing Completed
+InProgress --> Settled : Settlement Reached
+InProgress --> Decided : Court Decision
+Settled --> Closed : Settlement Executed
+Decided --> Closed : Judgment Executed
+Decided --> Appeal : Appeal Filed
+Appeal --> Closed : Appeal Resolved
+
+Closed --> [*]
+
+@enduml

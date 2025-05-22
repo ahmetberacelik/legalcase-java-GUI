@@ -13,9 +13,6 @@ package com.hasan.esra.ahmet.yakup.legalcaseconsole.model;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @brief Junction table entity for many-to-many relationship between Case and Client
@@ -24,11 +21,15 @@ import lombok.Setter;
  * links one case to one client.
  */
 @DatabaseTable(tableName = "case_client")
-@Getter
-@Setter
-@NoArgsConstructor
 public class CaseClient {
 
+    /**
+     * @brief Explicit no-arg constructor required by ORMLite
+     */
+    public CaseClient() {
+        super();
+    }
+    
     /**
      * @brief Unique identifier for the case-client relationship
      * @details Auto-generated primary key for the junction table
@@ -58,6 +59,54 @@ public class CaseClient {
      */
     public CaseClient(Case cse, Client client) {
         this.cse = cse;
+        this.client = client;
+    }
+    
+    /**
+     * @brief Get the ID of the case-client relationship
+     * @return The unique identifier
+     */
+    public Long getId() {
+        return id;
+    }
+    
+    /**
+     * @brief Set the ID of the case-client relationship
+     * @param id The ID to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+    /**
+     * @brief Get the associated case
+     * @return The Case entity
+     */
+    public Case getCse() {
+        return cse;
+    }
+    
+    /**
+     * @brief Set the associated case
+     * @param cse The Case entity to set
+     */
+    public void setCse(Case cse) {
+        this.cse = cse;
+    }
+    
+    /**
+     * @brief Get the associated client
+     * @return The Client entity
+     */
+    public Client getClient() {
+        return client;
+    }
+    
+    /**
+     * @brief Set the associated client
+     * @param client The Client entity to set
+     */
+    public void setClient(Client client) {
         this.client = client;
     }
 }

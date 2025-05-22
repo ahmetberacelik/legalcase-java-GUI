@@ -1,0 +1,33 @@
+@startuml Update Case Status Process - Sequence Diagram
+
+actor User
+boundary "CaseMenu" as CaseMenu
+control "CaseService" as CaseService
+entity "CaseDAO" as CaseDAO
+database "Database" as DB
+
+User -> CaseMenu: Select Update Case Status Option
+CaseMenu -> CaseMenu: updateCaseStatus()
+CaseMenu -> ConsoleHelper: readLong("Enter case ID:")
+ConsoleHelper --> CaseMenu: caseId
+CaseMenu -> CaseService: getCaseById(caseId)
+CaseService -> CaseDAO: getById(caseId)
+CaseDAO -> DB: Query case by ID
+DB --> CaseDAO: Optional<Case>
+CaseDAO --> CaseService: Optional<Case>
+CaseService --> CaseMenu: Optional<Case>
+CaseMenu -> CaseMenu: Check if case exists
+CaseMenu -> ConsoleHelper: Display case status options
+CaseMenu -> ConsoleHelper: readInt("Select new status:")
+ConsoleHelper --> CaseMenu: statusSelection
+CaseMenu -> CaseMenu: Convert selection to CaseStatus
+CaseMenu -> CaseService: updateCaseStatus(caseId, status)
+CaseService -> CaseDAO: updateStatus(caseId, status)
+CaseDAO -> DB: Update case status
+DB --> CaseDAO: Updated case
+CaseDAO --> CaseService: Case
+CaseService --> CaseMenu: Case
+CaseMenu -> ConsoleHelper: displaySuccess("Case status updated successfully")
+CaseMenu --> User: Show success message
+
+@enduml

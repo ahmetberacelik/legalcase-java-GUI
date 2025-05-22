@@ -1,0 +1,88 @@
+@startuml Component Diagram
+
+package "Legal Case Management System" {
+  [User Interface] as UI
+  [Business Logic] as BL
+  [Data Access] as DA
+  [Database] as DB
+  
+  package "UI Layer" {
+    [Menu System] as Menu
+    [Console Helper] as Console
+    
+    package "Menu Components" {
+      [Auth Menu] as AuthMenu
+      [Main Menu] as MainMenu
+      [Case Menu] as CaseMenu
+      [Client Menu] as ClientMenu
+      [Document Menu] as DocMenu
+      [Hearing Menu] as HearingMenu
+    }
+  }
+  
+  package "Business Logic Layer" {
+    [Auth Service] as AuthService
+    [Case Service] as CaseService
+    [Client Service] as ClientService
+    [Document Service] as DocService
+    [Hearing Service] as HearingService
+  }
+  
+  package "Data Access Layer" {
+    [User DAO] as UserDAO
+    [Case DAO] as CaseDAO
+    [Client DAO] as ClientDAO
+    [Document DAO] as DocDAO
+    [Hearing DAO] as HearingDAO
+  }
+  
+  package "Model" {
+    [Domain Entities] as Entities
+    [Enumerations] as Enums
+  }
+  
+  ' UI Layer connections
+  Menu --> Console : uses
+  AuthMenu --> Menu : extends
+  MainMenu --> Menu : extends
+  CaseMenu --> Menu : extends
+  ClientMenu --> Menu : extends
+  DocMenu --> Menu : extends
+  HearingMenu --> Menu : extends
+  
+  ' UI to Business Logic connections
+  AuthMenu --> AuthService : uses
+  MainMenu --> AuthService : uses
+  CaseMenu --> CaseService : uses
+  ClientMenu --> ClientService : uses
+  DocMenu --> DocService : uses
+  HearingMenu --> HearingService : uses
+  
+  ' Business Logic to Data Access connections
+  AuthService --> UserDAO : uses
+  CaseService --> CaseDAO : uses
+  ClientService --> ClientDAO : uses
+  DocService --> DocDAO : uses
+  HearingService --> HearingDAO : uses
+  
+  ' Data Access to Model connections
+  UserDAO --> Entities : uses
+  CaseDAO --> Entities : uses
+  ClientDAO --> Entities : uses
+  DocDAO --> Entities : uses
+  HearingDAO --> Entities : uses
+  
+  ' All layers use enumerations
+  AuthService --> Enums : uses
+  CaseService --> Enums : uses
+  ClientService --> Enums : uses
+  DocService --> Enums : uses
+  HearingService --> Enums : uses
+  
+  ' High-level connections
+  UI --> BL : uses
+  BL --> DA : uses
+  DA --> DB : uses
+}
+
+@enduml
