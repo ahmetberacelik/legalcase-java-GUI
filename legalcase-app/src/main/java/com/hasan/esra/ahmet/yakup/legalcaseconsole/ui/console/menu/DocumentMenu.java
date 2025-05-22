@@ -10,15 +10,15 @@
  * @author Hasan, Esra, Ahmet, Yakup
  * @date 2025-04-11
  */
-package com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.menu;
+package com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu;
 
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.Case;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.Document;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.DocumentType;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.CaseService;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.DocumentService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.ConsoleHelper;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.MenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.UiConsoleHelper;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.ConsoleMenuManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +35,7 @@ public class DocumentMenu {
      * @brief Menu manager reference for navigation control
      * @details Used to navigate between different menus in the application
      */
-    private final MenuManager menuManager;
+    private final ConsoleMenuManager consoleMenuManager;
 
     /**
      * @brief Document service for document operations
@@ -52,12 +52,12 @@ public class DocumentMenu {
     /**
      * @brief Constructor
      *
-     * @param menuManager Menu manager for navigation control
+     * @param consoleMenuManager Menu manager for navigation control
      * @param documentService Document service for document CRUD operations
      * @param caseService Case service for retrieving case information
      */
-    public DocumentMenu(MenuManager menuManager, DocumentService documentService, CaseService caseService) {
-        this.menuManager = menuManager;
+    public DocumentMenu(ConsoleMenuManager consoleMenuManager, DocumentService documentService, CaseService caseService) {
+        this.consoleMenuManager = consoleMenuManager;
         this.documentService = documentService;
         this.caseService = caseService;
     }
@@ -70,21 +70,21 @@ public class DocumentMenu {
      * searching documents, as well as filtering by various criteria.
      */
     public void display() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("Document Archive");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("Document Archive");
 
-        ConsoleHelper.displayMenuOption(1, "Add New Document");
-        ConsoleHelper.displayMenuOption(2, "View Document Details");
-        ConsoleHelper.displayMenuOption(3, "Update Document");
-        ConsoleHelper.displayMenuOption(4, "Delete Document");
-        ConsoleHelper.displayMenuOption(5, "Search Documents by Title");
-        ConsoleHelper.displayMenuOption(6, "List Documents by Type");
-        ConsoleHelper.displayMenuOption(7, "List Documents by Case");
-        ConsoleHelper.displayMenuOption(8, "List All Documents");
-        ConsoleHelper.displayMenuOption(9, "Return to Main Menu");
-        ConsoleHelper.displayHorizontalLine();
+        UiConsoleHelper.displayMenuOption(1, "Add New Document");
+        UiConsoleHelper.displayMenuOption(2, "View Document Details");
+        UiConsoleHelper.displayMenuOption(3, "Update Document");
+        UiConsoleHelper.displayMenuOption(4, "Delete Document");
+        UiConsoleHelper.displayMenuOption(5, "Search Documents by Title");
+        UiConsoleHelper.displayMenuOption(6, "List Documents by Type");
+        UiConsoleHelper.displayMenuOption(7, "List Documents by Case");
+        UiConsoleHelper.displayMenuOption(8, "List All Documents");
+        UiConsoleHelper.displayMenuOption(9, "Return to Main Menu");
+        UiConsoleHelper.displayHorizontalLine();
 
-        int choice = ConsoleHelper.readInt("Enter your choice", 1, 9);
+        int choice = UiConsoleHelper.readInt("Enter your choice", 1, 9);
 
         switch (choice) {
             case 1:
@@ -112,7 +112,7 @@ public class DocumentMenu {
                 viewAllDocuments();
                 break;
             case 9:
-                menuManager.navigateToMainMenu();
+                consoleMenuManager.navigateToMainMenu();
                 break;
         }
     }
@@ -125,60 +125,60 @@ public class DocumentMenu {
      * exists before allowing document creation.
      */
     public void addDocument() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("Add New Document");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("Add New Document");
 
         try {
             // First select the case to associate with
             List<Case> cases = caseService.getAllCases();
             if (cases.isEmpty()) {
-                ConsoleHelper.displayError("You must create a case first to add a document");
-                ConsoleHelper.pressEnterToContinue();
+                UiConsoleHelper.displayError("You must create a case first to add a document");
+                UiConsoleHelper.pressEnterToContinue();
                 display();
                 return;
             }
 
-            ConsoleHelper.displayMessage("Available cases:");
+            UiConsoleHelper.displayMessage("Available cases:");
             for (Case caseEntity : cases) {
-                ConsoleHelper.displayMessage("ID: " + caseEntity.getId() +
+                UiConsoleHelper.displayMessage("ID: " + caseEntity.getId() +
                         ", Case No: " + caseEntity.getCaseNumber() +
                         ", Title: " + caseEntity.getTitle());
             }
-            ConsoleHelper.displayHorizontalLine();
+            UiConsoleHelper.displayHorizontalLine();
 
-            Long caseId = ConsoleHelper.readLong("Enter case ID to add document");
+            Long caseId = UiConsoleHelper.readLong("Enter case ID to add document");
 
             Optional<Case> caseOpt = caseService.getCaseById(caseId);
             if (!caseOpt.isPresent()) {
-                ConsoleHelper.displayError("Case with specified ID not found.");
-                ConsoleHelper.pressEnterToContinue();
+                UiConsoleHelper.displayError("Case with specified ID not found.");
+                UiConsoleHelper.pressEnterToContinue();
                 display();
                 return;
             }
 
             // Get document details
-            String title = ConsoleHelper.readRequiredString("Enter document title");
-            DocumentType type = ConsoleHelper.readEnum("Select document type", DocumentType.class);
+            String title = UiConsoleHelper.readRequiredString("Enter document title");
+            DocumentType type = UiConsoleHelper.readEnum("Select document type", DocumentType.class);
 
             // Get document content (instead of actual file upload, text content)
-            ConsoleHelper.displayMessage("Enter document content (can be multiple lines, enter an empty line when finished):");
+            UiConsoleHelper.displayMessage("Enter document content (can be multiple lines, enter an empty line when finished):");
             StringBuilder contentBuilder = new StringBuilder();
             String line;
-            while (!(line = ConsoleHelper.readString("")).isEmpty()) {
+            while (!(line = UiConsoleHelper.readString("")).isEmpty()) {
                 contentBuilder.append(line).append("\n");
             }
             String content = contentBuilder.toString().trim();
 
             Document document = documentService.createDocument(caseId, title, type, content);
 
-            ConsoleHelper.displaySuccess("Document successfully added! ID: " + document.getId());
+            UiConsoleHelper.displaySuccess("Document successfully added! ID: " + document.getId());
         } catch (IllegalArgumentException e) {
-            ConsoleHelper.displayError(e.getMessage());
+            UiConsoleHelper.displayError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while adding document: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while adding document: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -189,37 +189,37 @@ public class DocumentMenu {
      * including its metadata and complete content.
      */
     public void viewDocumentDetails() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("View Document Details");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("View Document Details");
 
-        Long documentId = ConsoleHelper.readLong("Enter document ID");
+        Long documentId = UiConsoleHelper.readLong("Enter document ID");
         try {
             Optional<Document> documentOpt = documentService.getDocumentById(documentId);
 
             if (documentOpt.isPresent()) {
                 Document document = documentOpt.get();
 
-                ConsoleHelper.displayHorizontalLine();
-                ConsoleHelper.displayMessage("Document ID: " + document.getId());
-                ConsoleHelper.displayMessage("Title: " + document.getTitle());
-                ConsoleHelper.displayMessage("Type: " + document.getType());
-                ConsoleHelper.displayMessage("Case: " + document.getCse().getCaseNumber() + " - " + document.getCse().getTitle());
-                ConsoleHelper.displayMessage("Created At: " + document.getCreatedAt());
-                ConsoleHelper.displayMessage("Last Updated: " + document.getUpdatedAt());
+                UiConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Document ID: " + document.getId());
+                UiConsoleHelper.displayMessage("Title: " + document.getTitle());
+                UiConsoleHelper.displayMessage("Type: " + document.getType());
+                UiConsoleHelper.displayMessage("Case: " + document.getCse().getCaseNumber() + " - " + document.getCse().getTitle());
+                UiConsoleHelper.displayMessage("Created At: " + document.getCreatedAt());
+                UiConsoleHelper.displayMessage("Last Updated: " + document.getUpdatedAt());
 
                 // Show document content
-                ConsoleHelper.displayHorizontalLine();
-                ConsoleHelper.displayMessage("Document Content:");
-                ConsoleHelper.displayMessage(document.getContent());
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Document Content:");
+                UiConsoleHelper.displayMessage(document.getContent());
+                UiConsoleHelper.displayHorizontalLine();
             } else {
-                ConsoleHelper.displayError("Document with specified ID not found.");
+                UiConsoleHelper.displayError("Document with specified ID not found.");
             }
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while retrieving document information: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while retrieving document information: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -231,10 +231,10 @@ public class DocumentMenu {
      * update title, type, and content while preserving unchanged fields.
      */
     public void updateDocument() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("Update Document");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("Update Document");
 
-        Long documentId = ConsoleHelper.readLong("Enter document ID to update");
+        Long documentId = UiConsoleHelper.readLong("Enter document ID to update");
 
         try {
             Optional<Document> documentOpt = documentService.getDocumentById(documentId);
@@ -242,34 +242,34 @@ public class DocumentMenu {
             if (documentOpt.isPresent()) {
                 Document document = documentOpt.get();
 
-                ConsoleHelper.displayMessage("Current information:");
-                ConsoleHelper.displayMessage("Title: " + document.getTitle());
-                ConsoleHelper.displayMessage("Type: " + document.getType());
-                ConsoleHelper.displayMessage("Case: " + document.getCse().getCaseNumber() + " - " + document.getCse().getTitle());
+                UiConsoleHelper.displayMessage("Current information:");
+                UiConsoleHelper.displayMessage("Title: " + document.getTitle());
+                UiConsoleHelper.displayMessage("Type: " + document.getType());
+                UiConsoleHelper.displayMessage("Case: " + document.getCse().getCaseNumber() + " - " + document.getCse().getTitle());
 
                 // Show a short content preview
                 String contentPreview = document.getContent();
                 if (contentPreview.length() > 100) {
                     contentPreview = contentPreview.substring(0, 100) + "...";
                 }
-                ConsoleHelper.displayMessage("Content Preview: " + contentPreview);
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Content Preview: " + contentPreview);
+                UiConsoleHelper.displayHorizontalLine();
 
-                String title = ConsoleHelper.readString("Enter new title (leave empty for current value)");
+                String title = UiConsoleHelper.readString("Enter new title (leave empty for current value)");
 
-                boolean updateType = ConsoleHelper.readBoolean("Do you want to change the document type?");
+                boolean updateType = UiConsoleHelper.readBoolean("Do you want to change the document type?");
                 DocumentType type = updateType ?
-                        ConsoleHelper.readEnum("Select new document type", DocumentType.class) :
+                        UiConsoleHelper.readEnum("Select new document type", DocumentType.class) :
                         document.getType();
 
-                boolean updateContent = ConsoleHelper.readBoolean("Do you want to update the document content?");
+                boolean updateContent = UiConsoleHelper.readBoolean("Do you want to update the document content?");
                 String content = document.getContent();
 
                 if (updateContent) {
-                    ConsoleHelper.displayMessage("Enter new document content (can be multiple lines, enter an empty line when finished):");
+                    UiConsoleHelper.displayMessage("Enter new document content (can be multiple lines, enter an empty line when finished):");
                     StringBuilder contentBuilder = new StringBuilder();
                     String line;
-                    while (!(line = ConsoleHelper.readString("")).isEmpty()) {
+                    while (!(line = UiConsoleHelper.readString("")).isEmpty()) {
                         contentBuilder.append(line).append("\n");
                     }
                     content = contentBuilder.toString().trim();
@@ -279,17 +279,17 @@ public class DocumentMenu {
 
                 documentService.updateDocument(documentId, title, type, content);
 
-                ConsoleHelper.displaySuccess("Document successfully updated");
+                UiConsoleHelper.displaySuccess("Document successfully updated");
             } else {
-                ConsoleHelper.displayError("Document with specified ID not found.");
+                UiConsoleHelper.displayError("Document with specified ID not found.");
             }
         } catch (IllegalArgumentException e) {
-            ConsoleHelper.displayError(e.getMessage());
+            UiConsoleHelper.displayError(e.getMessage());
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while updating document: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while updating document: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -300,10 +300,10 @@ public class DocumentMenu {
      * Shows document details before deletion for verification.
      */
     public void deleteDocument() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("Delete Document");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("Delete Document");
 
-        Long documentId = ConsoleHelper.readLong("Enter document ID to delete");
+        Long documentId = UiConsoleHelper.readLong("Enter document ID to delete");
 
         try {
             Optional<Document> documentOpt = documentService.getDocumentById(documentId);
@@ -311,29 +311,29 @@ public class DocumentMenu {
             if (documentOpt.isPresent()) {
                 Document document = documentOpt.get();
 
-                ConsoleHelper.displayMessage("Document information to be deleted:");
-                ConsoleHelper.displayMessage("ID: " + document.getId());
-                ConsoleHelper.displayMessage("Title: " + document.getTitle());
-                ConsoleHelper.displayMessage("Type: " + document.getType());
-                ConsoleHelper.displayMessage("Case: " + document.getCse().getCaseNumber() + " - " + document.getCse().getTitle());
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Document information to be deleted:");
+                UiConsoleHelper.displayMessage("ID: " + document.getId());
+                UiConsoleHelper.displayMessage("Title: " + document.getTitle());
+                UiConsoleHelper.displayMessage("Type: " + document.getType());
+                UiConsoleHelper.displayMessage("Case: " + document.getCse().getCaseNumber() + " - " + document.getCse().getTitle());
+                UiConsoleHelper.displayHorizontalLine();
 
-                boolean confirm = ConsoleHelper.readBoolean("Are you sure you want to delete this document?");
+                boolean confirm = UiConsoleHelper.readBoolean("Are you sure you want to delete this document?");
 
                 if (confirm) {
                     documentService.deleteDocument(documentId);
-                    ConsoleHelper.displaySuccess("Document successfully deleted");
+                    UiConsoleHelper.displaySuccess("Document successfully deleted");
                 } else {
-                    ConsoleHelper.displayMessage("Operation cancelled");
+                    UiConsoleHelper.displayMessage("Operation cancelled");
                 }
             } else {
-                ConsoleHelper.displayError("Document with specified ID not found.");
+                UiConsoleHelper.displayError("Document with specified ID not found.");
             }
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while deleting document: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while deleting document: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -344,32 +344,32 @@ public class DocumentMenu {
      * and displays matching results with basic metadata.
      */
     public void searchDocumentsByTitle() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("Search Documents by Title");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("Search Documents by Title");
 
-        String title = ConsoleHelper.readRequiredString("Enter title term to search");
+        String title = UiConsoleHelper.readRequiredString("Enter title term to search");
 
         try {
             List<Document> documents = documentService.searchDocumentsByTitle(title);
 
             if (documents.isEmpty()) {
-                ConsoleHelper.displayMessage("No documents found matching search criteria.");
+                UiConsoleHelper.displayMessage("No documents found matching search criteria.");
             } else {
-                ConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
+                UiConsoleHelper.displayHorizontalLine();
 
                 for (Document document : documents) {
-                    ConsoleHelper.displayMessage("ID: " + document.getId() +
+                    UiConsoleHelper.displayMessage("ID: " + document.getId() +
                             ", Title: " + document.getTitle() +
                             ", Type: " + document.getType() +
                             ", Case: " + document.getCse().getCaseNumber());
                 }
             }
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while searching documents: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while searching documents: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -380,31 +380,31 @@ public class DocumentMenu {
      * the selected document type (e.g., contract, court order, evidence).
      */
     public void listDocumentsByType() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("List Documents by Type");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("List Documents by Type");
 
-        DocumentType type = ConsoleHelper.readEnum("Select document type to list", DocumentType.class);
+        DocumentType type = UiConsoleHelper.readEnum("Select document type to list", DocumentType.class);
 
         try {
             List<Document> documents = documentService.getDocumentsByType(type);
 
             if (documents.isEmpty()) {
-                ConsoleHelper.displayMessage("No documents found of the specified type.");
+                UiConsoleHelper.displayMessage("No documents found of the specified type.");
             } else {
-                ConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
+                UiConsoleHelper.displayHorizontalLine();
 
                 for (Document document : documents) {
-                    ConsoleHelper.displayMessage("ID: " + document.getId() +
+                    UiConsoleHelper.displayMessage("ID: " + document.getId() +
                             ", Title: " + document.getTitle() +
                             ", Case: " + document.getCse().getCaseNumber());
                 }
             }
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while listing documents: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while listing documents: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -416,49 +416,49 @@ public class DocumentMenu {
      * in the system before proceeding.
      */
     public void listDocumentsByCase() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("List Documents by Case");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("List Documents by Case");
 
         try {
             // First list all cases
             List<Case> cases = caseService.getAllCases();
             if (cases.isEmpty()) {
-                ConsoleHelper.displayMessage("There are no registered cases in the system.");
-                ConsoleHelper.pressEnterToContinue();
+                UiConsoleHelper.displayMessage("There are no registered cases in the system.");
+                UiConsoleHelper.pressEnterToContinue();
                 display();
                 return;
             }
 
-            ConsoleHelper.displayMessage("Available cases:");
+            UiConsoleHelper.displayMessage("Available cases:");
             for (Case caseEntity : cases) {
-                ConsoleHelper.displayMessage("ID: " + caseEntity.getId() +
+                UiConsoleHelper.displayMessage("ID: " + caseEntity.getId() +
                         ", Case No: " + caseEntity.getCaseNumber() +
                         ", Title: " + caseEntity.getTitle());
             }
-            ConsoleHelper.displayHorizontalLine();
+            UiConsoleHelper.displayHorizontalLine();
 
-            Long caseId = ConsoleHelper.readLong("Enter case ID to list documents");
+            Long caseId = UiConsoleHelper.readLong("Enter case ID to list documents");
 
             List<Document> documents = documentService.getDocumentsByCaseId(caseId);
 
             if (documents.isEmpty()) {
-                ConsoleHelper.displayMessage("There are no documents for this case.");
+                UiConsoleHelper.displayMessage("There are no documents for this case.");
             } else {
-                ConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
+                UiConsoleHelper.displayHorizontalLine();
 
                 for (Document document : documents) {
-                    ConsoleHelper.displayMessage("ID: " + document.getId() +
+                    UiConsoleHelper.displayMessage("ID: " + document.getId() +
                             ", Title: " + document.getTitle() +
                             ", Type: " + document.getType() +
                             ", Created At: " + document.getCreatedAt());
                 }
             }
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while listing documents: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while listing documents: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 
@@ -469,30 +469,30 @@ public class DocumentMenu {
      * including basic metadata for each document (ID, title, type, and associated case).
      */
     public void viewAllDocuments() {
-        ConsoleHelper.clearScreen();
-        ConsoleHelper.displayMenuHeader("List All Documents");
+        UiConsoleHelper.clearScreen();
+        UiConsoleHelper.displayMenuHeader("List All Documents");
 
         try {
             List<Document> documents = documentService.getAllDocuments();
 
             if (documents.isEmpty()) {
-                ConsoleHelper.displayMessage("There are no registered documents in the system.");
+                UiConsoleHelper.displayMessage("There are no registered documents in the system.");
             } else {
-                ConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
-                ConsoleHelper.displayHorizontalLine();
+                UiConsoleHelper.displayMessage("Total " + documents.size() + " documents found:");
+                UiConsoleHelper.displayHorizontalLine();
 
                 for (Document document : documents) {
-                    ConsoleHelper.displayMessage("ID: " + document.getId() +
+                    UiConsoleHelper.displayMessage("ID: " + document.getId() +
                             ", Title: " + document.getTitle() +
                             ", Type: " + document.getType() +
                             ", Case: " + document.getCse().getCaseNumber());
                 }
             }
         } catch (Exception e) {
-            ConsoleHelper.displayError("Error occurred while listing documents: " + e.getMessage());
+            UiConsoleHelper.displayError("Error occurred while listing documents: " + e.getMessage());
         }
 
-        ConsoleHelper.pressEnterToContinue();
+        UiConsoleHelper.pressEnterToContinue();
         display();
     }
 }

@@ -1,7 +1,18 @@
-package com.hasan.esra.ahmet.yakup.legalcaseconsole.ui;
+/**
+ * @file MenuManager.java
+ * @brief Menu management class for the Legal Case Tracker system
+ *
+ * This file contains the MenuManager class which orchestrates the navigation between
+ * different menus in the application and manages the overall application lifecycle.
+ * It serves as a controller for the user interface flow.
+ *
+ * @author Hasan, Esra, Ahmet, Yakup
+ * @date 2025-04-11
+ */
+package com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console;
 
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.*;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.menu.*;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu.*;
 
 /**
  * @brief Manager class for coordinating menu navigation
@@ -9,7 +20,7 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.menu.*;
  * in the application and manages the overall application lifecycle.
  * It serves as a controller for the user interface flow.
  */
-public class MenuManager {
+public class ConsoleMenuManager {
     /**
      * @brief Authentication service for user login/logout
      */
@@ -80,8 +91,8 @@ public class MenuManager {
      * @param hearingService Hearing service
      * @param documentService Document service
      */
-    public MenuManager(AuthService authService, ClientService clientService, CaseService caseService,
-                       HearingService hearingService, DocumentService documentService) {
+    public ConsoleMenuManager(AuthService authService, ClientService clientService, CaseService caseService,
+                              HearingService hearingService, DocumentService documentService) {
         this.authService = authService;
         this.clientService = clientService;
         this.caseService = caseService;
@@ -111,7 +122,7 @@ public class MenuManager {
      */
     public void start() {
         while (running) {
-            ConsoleHelper.clearScreen();
+            UiConsoleHelper.clearScreen();
             if (!authService.isLoggedIn()) {
                 authMenu.display();
             } else {
@@ -119,8 +130,8 @@ public class MenuManager {
             }
         }
 
-        ConsoleHelper.displayMessage("Thank you for using the Legal Case Tracker. Goodbye!");
-        ConsoleHelper.closeScanner();
+        UiConsoleHelper.displayMessage("Thank you for using the Legal Case Tracker. Goodbye!");
+        UiConsoleHelper.closeScanner();
     }
 
     /**
