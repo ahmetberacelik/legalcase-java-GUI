@@ -6,8 +6,10 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.UserDAO;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.User;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.UserRole;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.*;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.ConsoleHelper;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.MenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.ConsoleMenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.UiConsoleHelper;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu.CaseMenu;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu.MainMenu;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.util.TestDatabaseManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 public class MainMenuTest {
 
-    private MenuManager menuManager;
+    private ConsoleMenuManager consoleMenuManager;
     private CaseMenu caseMenu;
     private CaseService caseService;
     private ClientService clientService;
@@ -41,33 +43,30 @@ public class MainMenuTest {
         // Capture console output
         System.setOut(new PrintStream(outContent));
 
-        // Konsol çıktısını yakalama
-        System.setOut(new PrintStream(outContent));
-
-        // Test veritabanını kurma
+        // Set up test database
         TestDatabaseManager.createTables();
 
-        // DAO nesnelerini oluşturma
-        caseDAO = new CaseDAO(TestDatabaseManager.getConnectionSource());
-        clientDAO = new ClientDAO(TestDatabaseManager.getConnectionSource());
-        userDAO = new UserDAO(TestDatabaseManager.getConnectionSource());
+        // Create DAO objects
+        UserDAO userDAO = new UserDAO(TestDatabaseManager.getConnectionSource());
+        ClientDAO clientDAO = new ClientDAO(TestDatabaseManager.getConnectionSource());
+        CaseDAO caseDAO = new CaseDAO(TestDatabaseManager.getConnectionSource());
 
-        // Service nesnelerini oluşturma
-        caseService = new CaseService(caseDAO, clientDAO);
-        clientService = new ClientService(clientDAO);
+        // Create service objects
         authService = new AuthService(userDAO);
-        documentService = new DocumentService(null, caseDAO); // Belge DAO'su null olabilir, bizim testlerimiz için gerekli değil
-        hearingService = new HearingService(null, caseDAO); // Duruşma DAO'su null olabilir, bizim testlerimiz için gerekli değil
+        clientService = new ClientService(clientDAO);
+        caseService = new CaseService(caseDAO, clientDAO);
+        documentService = new DocumentService(null, caseDAO); // Document DAO can be null, not needed for our tests
+        hearingService = new HearingService(null, caseDAO); // Hearing DAO can be null, not needed for our tests
 
-        // Test kullanıcısı oluşturup giriş yapalım
-        User testUser = authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
+        // Create test user and login
+        authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
         authService.login("testuser", "password");
 
-        // MenuManager'ı test versiyonuyla oluşturma
-        menuManager = new MenuManager(authService, clientService, caseService, hearingService, documentService);
+        // Create MenuManager with test version
+        consoleMenuManager = new ConsoleMenuManager(authService, clientService, caseService, hearingService, documentService);
 
-        // CaseMenu nesnesi oluşturma
-        caseMenu = new CaseMenu(menuManager, caseService, clientService);
+        // Create CaseMenu object
+        caseMenu = new CaseMenu(consoleMenuManager, caseService, clientService);
     }
 
     //Craete test cases for MainMenu display method
@@ -75,8 +74,8 @@ public class MainMenuTest {
     public void Test_Display_EnterEveryCase_ShouldExit() {
         //Test case for display method
         authService.register("admin", "admin", "admin", "admin", "admin", UserRole.ADMIN);
-        ConsoleHelper.setScanner(new Scanner("1\n9\n2\n7\n3\n10\n4\n9\n5\n\n1\nadmin\nadmin\n\n6\n"));
-        MainMenu mainMenu = new MainMenu(menuManager, authService);
+        UiConsoleHelper.setScanner(new Scanner("1\n9\n2\n7\n3\n10\n4\n9\n5\n\n1\nadmin\nadmin\n\n6\n"));
+        MainMenu mainMenu = new MainMenu(consoleMenuManager, authService);
         mainMenu.display();
         assertTrue(true);
     }
