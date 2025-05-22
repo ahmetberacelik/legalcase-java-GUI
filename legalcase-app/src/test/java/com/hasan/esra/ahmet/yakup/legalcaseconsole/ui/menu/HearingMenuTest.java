@@ -1,8 +1,6 @@
 package com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.menu;
 
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.CaseDAO;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.HearingDAO;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.UserDAO;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.dao.*;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.Case;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.Hearing;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.User;
@@ -10,13 +8,10 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.CaseStatus;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.CaseType;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.HearingStatus;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.UserRole;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.AuthService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.CaseService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.ClientService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.DocumentService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.HearingService;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.ConsoleHelper;
-import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.MenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.service.*;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.UiConsoleHelper;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.ConsoleMenuManager;
+import com.hasan.esra.ahmet.yakup.legalcaseconsole.ui.console.menu.HearingMenu;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.util.TestDatabaseManager;
 import org.junit.After;
 import org.junit.Before;
@@ -36,7 +31,7 @@ import static org.junit.Assert.*;
 
 public class HearingMenuTest {
 
-    private MenuManager menuManager;
+    private ConsoleMenuManager consoleMenuManager;
     private HearingMenu hearingMenu;
     private HearingService hearingService;
     private CaseService caseService;
@@ -48,26 +43,26 @@ public class HearingMenuTest {
     private CaseDAO caseDAO;
     private UserDAO userDAO;
 
-    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
-    // Test için kullanılacak dava
+    // Case to be used for testing
     private Case testCase;
 
-    // MenuManager'ı test için genişleten iç sınıf
-    private class TestMenuManager extends MenuManager {
+    // Inner class that extends MenuManager for testing
+    private class TestConsoleMenuManager extends ConsoleMenuManager {
         private boolean navigatedToMainMenu = false;
 
-        public TestMenuManager(AuthService authService, ClientService clientService,
-                               CaseService caseService, HearingService hearingService,
-                               DocumentService documentService) {
+        public TestConsoleMenuManager(AuthService authService, ClientService clientService,
+                                      CaseService caseService, HearingService hearingService,
+                                      DocumentService documentService) {
             super(authService, clientService, caseService, hearingService, documentService);
         }
 
         @Override
         public void navigateToMainMenu() {
             navigatedToMainMenu = true;
-            // Burada test için hiçbir şey yapmadan başarılı işaretlenecek
+            // Will be marked as successful without doing anything for testing
         }
 
         public boolean isNavigatedToMainMenu() {
@@ -77,353 +72,356 @@ public class HearingMenuTest {
 
     @Before
     public void setUp() throws SQLException {
-        // Konsol çıktısını yakalama
+        // Case to be used for testing
+        testCase = new Case("TEST-2024-001", "Test Case", CaseType.CIVIL);
+
+        // Capture console output
+        outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
-        // Test veritabanını kurma
+        // Set up test database
         TestDatabaseManager.createTables();
 
-        // DAO nesnelerini oluşturma
+        // Create DAO objects
+        userDAO = new UserDAO(TestDatabaseManager.getConnectionSource());
         caseDAO = new CaseDAO(TestDatabaseManager.getConnectionSource());
         hearingDAO = new HearingDAO(TestDatabaseManager.getConnectionSource());
-        userDAO = new UserDAO(TestDatabaseManager.getConnectionSource());
+        ClientDAO clientDAO = new ClientDAO(TestDatabaseManager.getConnectionSource());
+        DocumentDAO documentDAO = new DocumentDAO(TestDatabaseManager.getConnectionSource());
 
-        // Service nesnelerini oluşturma
-        caseService = new CaseService(caseDAO, null); // ClientDAO null olabilir, bizim testlerimiz için gerekli değil
-        clientService = new ClientService(null);
+        // Create service objects
+        caseService = new CaseService(caseDAO, null); // ClientDAO can be null, not needed for our tests
+        clientService = new ClientService(clientDAO);
         authService = new AuthService(userDAO);
-        documentService = new DocumentService(null, caseDAO);
         hearingService = new HearingService(hearingDAO, caseDAO);
+        documentService = new DocumentService(documentDAO, caseDAO);
 
-        // Test kullanıcısı oluşturup giriş yapalım
-        User testUser = authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
+        // Create test user and login
+        authService.register("testuser", "password", "test@example.com", "Test", "User", UserRole.ADMIN);
         authService.login("testuser", "password");
 
-        // Test davası oluşturma
-        testCase = new Case("DV2023-TEST", "Test Davası", CaseType.CIVIL);
-        testCase.setDescription("Test davası açıklaması");
-        testCase.setStatus(CaseStatus.NEW);
-        caseDAO.create(testCase);
+        // Create test case
+        testCase = caseService.createCase(testCase.getCaseNumber(), testCase.getTitle(), testCase.getType(), "Test description");
 
-        // MenuManager'ı test versiyonuyla oluşturma
-        menuManager = new TestMenuManager(authService, clientService, caseService, hearingService, documentService);
+        // Create MenuManager with test version
+        consoleMenuManager = new TestConsoleMenuManager(authService, clientService, caseService, hearingService, documentService);
 
-        // HearingMenu nesnesi oluşturma
-        hearingMenu = new HearingMenu(menuManager, hearingService, caseService);
+        // Create HearingMenu object
+        hearingMenu = new HearingMenu(consoleMenuManager, hearingService, caseService);
     }
 
     @After
     public void tearDown() throws SQLException {
-        // Konsol çıktısını eski haline getirme
+        // Restore console output
         System.setOut(originalOut);
 
-        // Scanner'ı sıfırlama
-        ConsoleHelper.resetScanner();
+        // Reset Scanner
+        UiConsoleHelper.resetScanner();
 
-        // Test veritabanı bağlantısını kapatma
+        // Close test database connection
         TestDatabaseManager.closeConnection();
     }
 
     @Test
     public void Test_Display_SelectAddHearing_Success() throws SQLException {
-        // Düzenleme - Scanner'ı "1. Yeni Duruşma Ekle" seçeneğini seçecek şekilde ayarlama
-        // Örnek duruşma bilgileri ve işlem sonunda ana menüye dönme (10)
+        // Setup - Configure Scanner to select "1. Add New Hearing" option
+        // Example hearing information and return to main menu (10)
         LocalDate hearingDate = LocalDate.now().plusDays(7);
         LocalTime hearingTime = LocalTime.of(10, 0);
 
-        ConsoleHelper.setScanner(new Scanner("1\n" + testCase.getId() + "\n" + hearingDate.toString() + "\n" +
-                hearingTime.toString() + "\nHakim Adı\nAdliye Binası\nTest notları\n\n10\n"));
+        UiConsoleHelper.setScanner(new Scanner("1\n" + testCase.getId() + "\n" + hearingDate.toString() + "\n" +
+                hearingTime.toString() + "\nJudge Name\nCourt Building\nTest notes\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Duruşma oluşturuldu mu?
+        // Verification - Was the hearing created?
         List<Hearing> hearings = hearingService.getHearingsByCaseId(testCase.getId());
-        assertFalse("Duruşma listesi boş olmamalı", hearings.isEmpty());
-        assertEquals("Duruşma hakimi doğru olmalı", "Hakim Adı", hearings.get(0).getJudge());
-        assertEquals("Duruşma lokasyonu doğru olmalı", "Adliye Binası", hearings.get(0).getLocation());
-        assertEquals("Duruşma notları doğru olmalı", "Test notları", hearings.get(0).getNotes());
-        assertEquals("Duruşma durumu SCHEDULED olmalı", HearingStatus.SCHEDULED, hearings.get(0).getStatus());
+        assertFalse("Hearing list should not be empty", hearings.isEmpty());
+        assertEquals("Hearing judge should be correct", "Judge Name", hearings.get(0).getJudge());
+        assertEquals("Hearing location should be correct", "Court Building", hearings.get(0).getLocation());
+        assertEquals("Hearing notes should be correct", "Test notes", hearings.get(0).getNotes());
+        assertEquals("Hearing status should be SCHEDULED", HearingStatus.SCHEDULED, hearings.get(0).getStatus());
     }
 
     @Test
     public void Test_Display_SelectAddHearing_CaseNotFound_Error() {
-        // Düzenleme - Scanner'ı olmayan bir dava ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("1\n9999\n\n10\n"));
+        // Setup - Configure Scanner with non-existent case ID
+        UiConsoleHelper.setScanner(new Scanner("1\n9999\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Dava bulunamadı' mesajı olmalı", output.contains("Case with specified ID not found"));
+        assertTrue("Output should contain 'Case not found' message", output.contains("Case with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectViewHearingDetails_Success() throws SQLException {
-        // Önce bir duruşma ekleyelim
+        // First add a hearing
         LocalDateTime hearingDate = LocalDateTime.now().plusDays(7);
-        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Hakim", "Test Lokasyon", "Test Notları");
+        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Judge", "Test Location", "Test Notes");
 
-        // Düzenleme - Scanner'ı "2. Duruşma Detaylarını Görüntüle" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("2\n" + hearing.getId() + "\n\n\n10\n"));
+        // Setup - Configure Scanner to select "2. View Hearing Details" option
+        UiConsoleHelper.setScanner(new Scanner("2\n" + hearing.getId() + "\n\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda duruşma bilgileri var mı?
+        // Verification - Are hearing details in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda duruşma ID'si olmalı", output.contains("Hearing ID: " + hearing.getId()));
+        assertTrue("Output should contain hearing ID", output.contains("Hearing ID: " + hearing.getId()));
     }
 
     @Test
     public void Test_Display_SelectViewHearingDetails_NonExistentHearing_NotFound() {
-        // Düzenleme - Scanner'ı olmayan bir duruşma ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("2\n9999\n\n10\n"));
+        // Setup - Configure Scanner with non-existent hearing ID
+        UiConsoleHelper.setScanner(new Scanner("2\n9999\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Duruşma bulunamadı' mesajı olmalı", output.contains("Hearing with specified ID not found"));
+        assertTrue("Output should contain 'Hearing not found' message", output.contains("Hearing with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectUpdateHearing_Success() throws SQLException {
-        // Önce bir duruşma ekleyelim
+        // First add a hearing
         LocalDateTime hearingDate = LocalDateTime.now().plusDays(7);
-        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Eski Hakim", "Eski Lokasyon", "Eski Notlar");
+        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Old Judge", "Old Location", "Old Notes");
 
-        // Düzenleme - Scanner'ı "3. Duruşma Güncelle" seçeneğini seçecek şekilde ayarlama
-        // Tüm alanları güncelleyelim
-        ConsoleHelper.setScanner(new Scanner("3\n" + hearing.getId() + "\ny\nYeni Hakim\ny\nYeni Lokasyon\ny\nYeni Notlar\ny\n1\n\n10\n"));
+        // Setup - Configure Scanner to select "3. Update Hearing" option
+        // Update all fields
+        UiConsoleHelper.setScanner(new Scanner("3\n" + hearing.getId() + "\ny\nNew Judge\ny\nNew Location\ny\nNew Notes\ny\n1\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Duruşma güncellendi mi?
+        // Verification - Was the hearing updated?
         Optional<Hearing> updatedHearingOpt = hearingService.getHearingById(hearing.getId());
-        assertTrue("Duruşma bulunmalı", updatedHearingOpt.isPresent());
+        assertTrue("Hearing should be found", updatedHearingOpt.isPresent());
         Hearing updatedHearing = updatedHearingOpt.get();
-        assertEquals("Duruşma hakimi güncellenmiş olmalı", "Yeni Hakim", updatedHearing.getJudge());
-        assertEquals("Duruşma lokasyonu güncellenmiş olmalı", "Yeni Lokasyon", updatedHearing.getLocation());
-        assertEquals("Duruşma notları güncellenmiş olmalı", "Yeni Notlar", updatedHearing.getNotes());
-        assertEquals("Duruşma durumu güncellenmiş olmalı", HearingStatus.SCHEDULED, updatedHearing.getStatus());
+        assertEquals("Hearing judge should be updated", "New Judge", updatedHearing.getJudge());
+        assertEquals("Hearing location should be updated", "New Location", updatedHearing.getLocation());
+        assertEquals("Hearing notes should be updated", "New Notes", updatedHearing.getNotes());
+        assertEquals("Hearing status should be updated", HearingStatus.SCHEDULED, updatedHearing.getStatus());
     }
 
     @Test
     public void Test_Display_SelectUpdateHearing_NonExistentHearing_NotFound() {
-        // Düzenleme - Scanner'ı olmayan bir duruşma ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("3\n9999\n\n10\n"));
+        // Setup - Configure Scanner with non-existent hearing ID
+        UiConsoleHelper.setScanner(new Scanner("3\n9999\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Duruşma bulunamadı' mesajı olmalı", output.contains("Hearing with specified ID not found"));
+        assertTrue("Output should contain 'Hearing not found' message", output.contains("Hearing with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectRescheduleHearing_Success() throws SQLException {
-        // Önce bir duruşma ekleyelim
+        // First add a hearing
         LocalDateTime hearingDate = LocalDateTime.now().plusDays(7);
-        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Hakim", "Test Lokasyon", "Test Notları");
+        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Judge", "Test Location", "Test Notes");
 
-        // Düzenleme - Scanner'ı "4. Duruşma Yeniden Planla" seçeneğini seçecek şekilde ayarlama
+        // Setup - Configure Scanner to select "4. Reschedule Hearing" option
         LocalDate newDate = LocalDate.now().plusDays(14);
         LocalTime newTime = LocalTime.of(14, 30);
-        ConsoleHelper.setScanner(new Scanner("4\n" + hearing.getId() + "\n" + newDate.toString() + "\n" + newTime.toString() + "\n\n10\n"));
+        UiConsoleHelper.setScanner(new Scanner("4\n" + hearing.getId() + "\n" + newDate.toString() + "\n" + newTime.toString() + "\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Duruşma yeniden planlandı mı?
+        // Verification - Was the hearing rescheduled?
         Optional<Hearing> rescheduledHearingOpt = hearingService.getHearingById(hearing.getId());
-        assertTrue("Duruşma bulunmalı", rescheduledHearingOpt.isPresent());
+        assertTrue("Hearing should be found", rescheduledHearingOpt.isPresent());
         Hearing rescheduledHearing = rescheduledHearingOpt.get();
 
-        // Tarih ve saat kontrolü - Yıl, ay, gün, saat ve dakika kontrolü
+        // Date and time check - Year, month, day, hour and minute check
         LocalDateTime expectedDateTime = LocalDateTime.of(newDate, newTime);
-        assertEquals("Duruşma tarihi güncellenmiş olmalı - Yıl", expectedDateTime.getYear(), rescheduledHearing.getHearingDate().getYear());
-        assertEquals("Duruşma tarihi güncellenmiş olmalı - Ay", expectedDateTime.getMonth(), rescheduledHearing.getHearingDate().getMonth());
-        assertEquals("Duruşma tarihi güncellenmiş olmalı - Gün", expectedDateTime.getDayOfMonth(), rescheduledHearing.getHearingDate().getDayOfMonth());
-        assertEquals("Duruşma saati güncellenmiş olmalı - Saat", expectedDateTime.getHour(), rescheduledHearing.getHearingDate().getHour());
-        assertEquals("Duruşma saati güncellenmiş olmalı - Dakika", expectedDateTime.getMinute(), rescheduledHearing.getHearingDate().getMinute());
+        assertEquals("Hearing date should be updated - Year", expectedDateTime.getYear(), rescheduledHearing.getHearingDate().getYear());
+        assertEquals("Hearing date should be updated - Month", expectedDateTime.getMonth(), rescheduledHearing.getHearingDate().getMonth());
+        assertEquals("Hearing date should be updated - Day", expectedDateTime.getDayOfMonth(), rescheduledHearing.getHearingDate().getDayOfMonth());
+        assertEquals("Hearing time should be updated - Hour", expectedDateTime.getHour(), rescheduledHearing.getHearingDate().getHour());
+        assertEquals("Hearing time should be updated - Minute", expectedDateTime.getMinute(), rescheduledHearing.getHearingDate().getMinute());
 
-        // Duruşma durumu kontrolü
-        assertEquals("Duruşma durumu SCHEDULED olmalı", HearingStatus.SCHEDULED, rescheduledHearing.getStatus());
+        // Hearing status check
+        assertEquals("Hearing status should be SCHEDULED", HearingStatus.SCHEDULED, rescheduledHearing.getStatus());
 
-        // Notlar kontrolü - Yeniden planlama notu eklenmiş olmalı
-        assertTrue("Duruşma notlarında yeniden planlama bilgisi olmalı", rescheduledHearing.getNotes().contains("Hearing rescheduled from"));
+        // Notes check - Rescheduling note should be added
+        assertTrue("Hearing notes should contain rescheduling information", rescheduledHearing.getNotes().contains("Hearing rescheduled from"));
     }
 
     @Test
     public void Test_Display_SelectRescheduleHearing_NonExistentHearing_NotFound() {
-        // Düzenleme - Scanner'ı olmayan bir duruşma ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("4\n9999\n\n10\n"));
+        // Setup - Configure Scanner with non-existent hearing ID
+        UiConsoleHelper.setScanner(new Scanner("4\n9999\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Duruşma bulunamadı' mesajı olmalı", output.contains("Hearing with specified ID not found"));
+        assertTrue("Output should contain 'Hearing not found' message", output.contains("Hearing with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectUpdateHearingStatus_Success() throws SQLException {
-        // Önce bir duruşma ekleyelim
+        // First add a hearing
         LocalDateTime hearingDate = LocalDateTime.now().plusDays(7);
-        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Hakim", "Test Lokasyon", "Test Notları");
+        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Judge", "Test Location", "Test Notes");
 
-        // Düzenleme - Scanner'ı "5. Duruşma Durumunu Değiştir" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("5\n" + hearing.getId() + "\n2\n\n10\n")); // 2 = COMPLETED durumu
+        // Setup - Configure Scanner to select "5. Update Hearing Status" option
+        UiConsoleHelper.setScanner(new Scanner("5\n" + hearing.getId() + "\n2\n\n10\n")); // 2 = COMPLETED status
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Duruşma durumu güncellendi mi?
+        // Verification - Was the hearing status updated?
         Optional<Hearing> updatedHearingOpt = hearingService.getHearingById(hearing.getId());
-        assertTrue("Duruşma bulunmalı", updatedHearingOpt.isPresent());
-        assertEquals("Duruşma durumu COMPLETED olmalı", HearingStatus.COMPLETED, updatedHearingOpt.get().getStatus());
+        assertTrue("Hearing should be found", updatedHearingOpt.isPresent());
+        assertEquals("Hearing status should be COMPLETED", HearingStatus.COMPLETED, updatedHearingOpt.get().getStatus());
     }
 
     @Test
     public void Test_Display_SelectUpdateHearingStatus_NonExistentHearing_NotFound() {
-        // Düzenleme - Scanner'ı olmayan bir duruşma ID'si ile ayarlama
-        ConsoleHelper.setScanner(new Scanner("5\n9999\n\n10\n"));
+        // Setup - Configure Scanner with non-existent hearing ID
+        UiConsoleHelper.setScanner(new Scanner("5\n9999\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda hata mesajı var mı?
+        // Verification - Is there an error message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'Duruşma bulunamadı' mesajı olmalı", output.contains("Hearing with specified ID not found"));
+        assertTrue("Output should contain 'Hearing not found' message", output.contains("Hearing with specified ID not found"));
     }
 
     @Test
     public void Test_Display_SelectDeleteHearing_Success() throws SQLException {
-        // Önce bir duruşma ekleyelim
+        // First add a hearing
         LocalDateTime hearingDate = LocalDateTime.now().plusDays(7);
-        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Hakim", "Test Lokasyon", "Test Notları");
+        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Judge", "Test Location", "Test Notes");
 
-        // Düzenleme - Scanner'ı "6. Duruşma Sil" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("6\n" + hearing.getId() + "\ny\n\n10\n")); // Silme işlemini onaylama
+        // Setup - Configure Scanner to select "6. Delete Hearing" option
+        UiConsoleHelper.setScanner(new Scanner("6\n" + hearing.getId() + "\ny\n\n10\n")); // Confirm deletion
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Duruşma silindi mi?
+        // Verification - Was the hearing deleted?
         Optional<Hearing> deletedHearingOpt = hearingService.getHearingById(hearing.getId());
-        assertFalse("Duruşma silinmiş olmalı", deletedHearingOpt.isPresent());
+        assertFalse("Hearing should be deleted", deletedHearingOpt.isPresent());
     }
 
     @Test
     public void Test_Display_SelectDeleteHearing_Cancelled_NotDeleted() throws SQLException {
-        // Önce bir duruşma ekleyelim
+        // First add a hearing
         LocalDateTime hearingDate = LocalDateTime.now().plusDays(7);
-        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Hakim", "Test Lokasyon", "Test Notları");
+        Hearing hearing = hearingService.createHearing(testCase.getId(), hearingDate, "Test Judge", "Test Location", "Test Notes");
 
-        // Düzenleme - Scanner'ı "6. Duruşma Sil" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("6\n" + hearing.getId() + "\nn\n\n10\n")); // Silme işlemini iptal etme
+        // Setup - Configure Scanner to select "6. Delete Hearing" option
+        UiConsoleHelper.setScanner(new Scanner("6\n" + hearing.getId() + "\nn\n\n10\n")); // Cancel deletion
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Duruşma silinmedi mi?
+        // Verification - Was the hearing not deleted?
         Optional<Hearing> hearingOpt = hearingService.getHearingById(hearing.getId());
-        assertTrue("Duruşma silinmemiş olmalı", hearingOpt.isPresent());
+        assertTrue("Hearing should not be deleted", hearingOpt.isPresent());
 
-        // Çıktıda iptal mesajı var mı?
+        // Is there a cancellation message in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda 'İşlem iptal edildi' mesajı olmalı", output.contains("Operation cancelled"));
+        assertTrue("Output should contain 'Operation cancelled' message", output.contains("Operation cancelled"));
     }
 
     @Test
     public void Test_Display_SelectViewUpcomingHearings_Success() throws SQLException {
-        // Birkaç duruşma ekleyelim
+        // Add several hearings
         LocalDateTime pastDate = LocalDateTime.now().minusDays(7);
         LocalDateTime futureDate1 = LocalDateTime.now().plusDays(3);
         LocalDateTime futureDate2 = LocalDateTime.now().plusDays(7);
 
-        // Geçmiş duruşma
-        hearingService.createHearing(testCase.getId(), pastDate, "Geçmiş Hakim", "Geçmiş Lokasyon", "Geçmiş Notlar");
+        // Past hearing
+        hearingService.createHearing(testCase.getId(), pastDate, "Past Judge", "Past Location", "Past Notes");
 
-        // Gelecek duruşmalar
-        Hearing future1 = hearingService.createHearing(testCase.getId(), futureDate1, "Gelecek Hakim 1", "Gelecek Lokasyon 1", "Gelecek Notlar 1");
-        Hearing future2 = hearingService.createHearing(testCase.getId(), futureDate2, "Gelecek Hakim 2", "Gelecek Lokasyon 2", "Gelecek Notlar 2");
+        // Future hearings
+        Hearing future1 = hearingService.createHearing(testCase.getId(), futureDate1, "Future Judge 1", "Future Location 1", "Future Notes 1");
+        Hearing future2 = hearingService.createHearing(testCase.getId(), futureDate2, "Future Judge 2", "Future Location 2", "Future Notes 2");
 
-        // Düzenleme - Scanner'ı "7. Yaklaşan Duruşmaları Listele" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("7\n\n10\n"));
+        // Setup - Configure Scanner to select "7. List Upcoming Hearings" option
+        UiConsoleHelper.setScanner(new Scanner("7\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda gelecek duruşmalar var mı?
+        // Verification - Are future hearings in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda gelecek duruşma 1 ID'si olmalı", output.contains("ID: " + future1.getId()));
-        assertTrue("Çıktıda gelecek duruşma 2 ID'si olmalı", output.contains("ID: " + future2.getId()));
+        assertTrue("Output should contain future hearing 1 ID", output.contains("ID: " + future1.getId()));
+        assertTrue("Output should contain future hearing 2 ID", output.contains("ID: " + future2.getId()));
     }
 
     @Test
     public void Test_Display_SelectViewHearingsByCase_Success() throws SQLException {
-        // Birkaç duruşma ekleyelim
+        // Add several hearings
         LocalDateTime date1 = LocalDateTime.now().plusDays(3);
         LocalDateTime date2 = LocalDateTime.now().plusDays(7);
 
-        Hearing hearing1 = hearingService.createHearing(testCase.getId(), date1, "Hakim 1", "Lokasyon 1", "Notlar 1");
-        Hearing hearing2 = hearingService.createHearing(testCase.getId(), date2, "Hakim 2", "Lokasyon 2", "Notlar 2");
+        Hearing hearing1 = hearingService.createHearing(testCase.getId(), date1, "Judge 1", "Location 1", "Notes 1");
+        Hearing hearing2 = hearingService.createHearing(testCase.getId(), date2, "Judge 2", "Location 2", "Notes 2");
 
-        // Düzenleme - Scanner'ı "8. Davaya Göre Duruşmaları Listele" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("8\n" + testCase.getId() + "\n\n10\n"));
+        // Setup - Configure Scanner to select "8. List Hearings by Case" option
+        UiConsoleHelper.setScanner(new Scanner("8\n" + testCase.getId() + "\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda duruşmalar var mı?
+        // Verification - Are hearings in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda duruşma 1 ID'si olmalı", output.contains("ID: " + hearing1.getId()));
-        assertTrue("Çıktıda duruşma 2 ID'si olmalı", output.contains("ID: " + hearing2.getId()));
+        assertTrue("Output should contain hearing 1 ID", output.contains("ID: " + hearing1.getId()));
+        assertTrue("Output should contain hearing 2 ID", output.contains("ID: " + hearing2.getId()));
     }
 
     @Test
     public void Test_Display_SelectViewHearingsByDateRange_Success() throws SQLException {
-        // Birkaç duruşma ekleyelim
-        LocalDateTime date1 = LocalDateTime.now().plusDays(3); // Tarih aralığı içinde
-        LocalDateTime date2 = LocalDateTime.now().plusDays(7); // Tarih aralığı içinde
-        LocalDateTime date3 = LocalDateTime.now().plusDays(15); // Tarih aralığı dışında
+        // Add several hearings
+        LocalDateTime date1 = LocalDateTime.now().plusDays(3); // Within date range
+        LocalDateTime date2 = LocalDateTime.now().plusDays(7); // Within date range
+        LocalDateTime date3 = LocalDateTime.now().plusDays(15); // Outside date range
 
-        Hearing hearing1 = hearingService.createHearing(testCase.getId(), date1, "Hakim 1", "Lokasyon 1", "Notlar 1");
-        Hearing hearing2 = hearingService.createHearing(testCase.getId(), date2, "Hakim 2", "Lokasyon 2", "Notlar 2");
-        Hearing hearing3 = hearingService.createHearing(testCase.getId(), date3, "Hakim 3", "Lokasyon 3", "Notlar 3");
+        Hearing hearing1 = hearingService.createHearing(testCase.getId(), date1, "Judge 1", "Location 1", "Notes 1");
+        Hearing hearing2 = hearingService.createHearing(testCase.getId(), date2, "Judge 2", "Location 2", "Notes 2");
+        Hearing hearing3 = hearingService.createHearing(testCase.getId(), date3, "Judge 3", "Location 3", "Notes 3");
 
-        // Düzenleme - Scanner'ı "9. Tarih Aralığına Göre Duruşmaları Listele" seçeneğini seçecek şekilde ayarlama
+        // Setup - Configure Scanner to select "9. List Hearings by Date Range" option
         LocalDate startDate = LocalDate.now().plusDays(1);
         LocalDate endDate = LocalDate.now().plusDays(10);
-        ConsoleHelper.setScanner(new Scanner("9\n" + startDate.toString() + "\n" + endDate.toString() + "\n\n10\n"));
+        UiConsoleHelper.setScanner(new Scanner("9\n" + startDate.toString() + "\n" + endDate.toString() + "\n\n10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Çıktıda tarih aralığındaki duruşmalar var mı?
+        // Verification - Are hearings within date range in the output?
         String output = outContent.toString();
-        assertTrue("Çıktıda duruşma 1 ID'si olmalı", output.contains("ID: " + hearing1.getId()));
-        assertTrue("Çıktıda duruşma 2 ID'si olmalı", output.contains("ID: " + hearing2.getId()));
-        assertFalse("Çıktıda duruşma 3 ID'si olmamalı", output.contains("ID: " + hearing3.getId()));
+        assertTrue("Output should contain hearing 1 ID", output.contains("ID: " + hearing1.getId()));
+        assertTrue("Output should contain hearing 2 ID", output.contains("ID: " + hearing2.getId()));
+        assertFalse("Output should not contain hearing 3 ID", output.contains("ID: " + hearing3.getId()));
     }
 
     @Test
     public void Test_Display_SelectReturnToMainMenu_Success() {
-        // Düzenleme - Scanner'ı "10. Ana Menüye Dön" seçeneğini seçecek şekilde ayarlama
-        ConsoleHelper.setScanner(new Scanner("10\n"));
+        // Setup - Configure Scanner to select "10. Return to Main Menu" option
+        UiConsoleHelper.setScanner(new Scanner("10\n"));
 
-        // İşlem
+        // Action
         hearingMenu.display();
 
-        // Doğrulama - Ana menüye yönlendirildi mi?
-        TestMenuManager testMenuManager = (TestMenuManager) menuManager;
-        assertTrue("Ana menüye yönlendirilmiş olmalı", testMenuManager.isNavigatedToMainMenu());
+        // Verification - Was redirected to main menu?
+        TestConsoleMenuManager testMenuManager = (TestConsoleMenuManager) consoleMenuManager;
+        assertTrue("Should be redirected to main menu", testMenuManager.isNavigatedToMainMenu());
     }
 }
