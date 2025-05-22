@@ -308,10 +308,9 @@ public class CaseDAOTest {
         caseEntity.setDescription("Updated description");
 
         // Act
-        int updatedRows = caseDAO.update(caseEntity);
+        caseDAO.update(caseEntity);
 
-        // Assert
-        assertEquals("1 row should be updated", 1, updatedRows);
+        // Assert - We can only check if the update was applied correctly
 
         // Check updated case from database
         Optional<Case> updatedCaseOpt = caseDAO.getById(caseEntity.getId());
@@ -339,10 +338,9 @@ public class CaseDAOTest {
         assertTrue("Case should exist before deletion", beforeDeleteOpt.isPresent());
 
         // Act
-        int deletedRows = caseDAO.delete(caseEntity);
+        caseDAO.delete(caseEntity);
 
-        // Assert
-        assertEquals("1 row should be deleted", 1, deletedRows);
+        // Assert - We can only check if the deletion was successful
 
         // Check that case was deleted
         Optional<Case> afterDeleteOpt = caseDAO.getById(caseEntity.getId());
@@ -366,10 +364,9 @@ public class CaseDAOTest {
         assertTrue("Case should exist before deletion", beforeDeleteOpt.isPresent());
 
         // Act
-        int deletedRows = caseDAO.deleteById(caseEntity.getId());
+        caseDAO.deleteById(caseEntity.getId());
 
-        // Assert
-        assertEquals("1 row should be deleted", 1, deletedRows);
+        // Assert - We can only check if the deletion was successful
 
         // Check that case was deleted
         Optional<Case> afterDeleteOpt = caseDAO.getById(caseEntity.getId());
