@@ -20,12 +20,12 @@ import java.util.Optional;
 
 /**
  * Document management panel for the legal case management system
- *
+ * 
  * This class provides a comprehensive user interface for managing legal documents
  * within the legal case management application. It enables users to perform CRUD
  * operations (Create, Read, Update, Delete) on document records with an intuitive
  * graphical interface.
- *
+ * 
  * The panel includes functionality for:
  * - Viewing a list of all legal documents in a sortable table
  * - Searching for specific documents using various criteria
@@ -33,7 +33,7 @@ import java.util.Optional;
  * - Editing existing document information
  * - Deleting documents from the database
  * - Associating documents with specific legal cases
- *
+ * 
  * @author Legal Case Management System Team
  * @version 1.0
  */
@@ -43,37 +43,37 @@ public class DocumentPanel extends JPanel {
      * Handles all business logic and database interactions related to legal documents
      */
     private final DocumentService documentService;
-
+    
     /**
      * Service for case data operations
      * Used to fetch case information when associating documents with cases
      */
     private final CaseService caseService;
-
+    
     /**
      * Reference to the main application frame
      * Used for navigation between panels and maintaining application context
      */
     private final MainFrame mainFrame;
-
+    
     /**
      * Table component for displaying document records
      * Shows all document data in a structured tabular format
      */
     private JTable documentTable;
-
+    
     /**
      * Table model for managing the data displayed in the document table
      * Controls the structure, content, and behavior of the table
      */
     private DefaultTableModel tableModel;
-
+    
     /**
      * Text field for entering search queries
      * Used to filter documents based on user input
      */
     private JTextField searchField;
-
+    
     /**
      * Button to initiate search operations
      * Triggers the filtering of document records based on search criteria
@@ -82,7 +82,7 @@ public class DocumentPanel extends JPanel {
 
     /**
      * Constructs a new DocumentPanel with necessary dependencies
-     *
+     * 
      * Initializes the document management panel with services and navigation dependencies,
      * sets up the user interface components, and loads the initial document data.
      *
@@ -96,14 +96,14 @@ public class DocumentPanel extends JPanel {
         this.mainFrame = mainFrame;
         initializeUI();
         loadDocuments();
-
+        
         // Apply theme to this panel
         LegalTheme.applyPanelStyle(this);
     }
 
     /**
      * Initializes the user interface components
-     *
+     * 
      * Sets up the layout, creates and configures all UI components including
      * the document table, search panel, and action buttons. Organizes components
      * into a cohesive and user-friendly interface following the application's
@@ -122,7 +122,7 @@ public class DocumentPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.setBackground(LegalTheme.PANEL_BACKGROUND);
         buttonPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
-
+        
         JButton addButton = new JButton("Add New Document");
         JButton editButton = new JButton("Edit Document");
         JButton deleteButton = new JButton("Delete Document");
@@ -156,7 +156,7 @@ public class DocumentPanel extends JPanel {
         };
         documentTable = new JTable(tableModel);
         LegalTheme.applyTableStyle(documentTable);
-
+        
         JScrollPane scrollPane = new JScrollPane(documentTable);
         LegalTheme.applyScrollPaneStyle(scrollPane);
 
@@ -164,18 +164,18 @@ public class DocumentPanel extends JPanel {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.setBackground(LegalTheme.PANEL_BACKGROUND);
         searchPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
-
+        
         JLabel searchLabel = new JLabel("Search: ");
         searchLabel.setFont(LegalTheme.NORMAL_FONT);
         searchLabel.setForeground(LegalTheme.TEXT_COLOR);
-
+        
         searchField = new JTextField(20);
         LegalTheme.applyTextFieldStyle(searchField);
-
+        
         searchButton = new JButton("Search");
         LegalTheme.applyButtonStyle(searchButton);
         searchButton.addActionListener(e -> searchDocuments());
-
+        
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
@@ -183,12 +183,12 @@ public class DocumentPanel extends JPanel {
         // Create a panel for the table with a title
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(LegalTheme.PRIMARY_COLOR),
-                "Document List",
-                TitledBorder.LEFT,
-                TitledBorder.TOP,
-                LegalTheme.HEADER_FONT,
-                LegalTheme.PRIMARY_COLOR));
+            BorderFactory.createLineBorder(LegalTheme.PRIMARY_COLOR),
+            "Document List",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            LegalTheme.HEADER_FONT,
+            LegalTheme.PRIMARY_COLOR));
         tablePanel.setBackground(LegalTheme.PANEL_BACKGROUND);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         tablePanel.add(searchPanel, BorderLayout.NORTH);
@@ -200,7 +200,7 @@ public class DocumentPanel extends JPanel {
 
     /**
      * Loads all document records from the service into the table
-     *
+     * 
      * Retrieves document data from the document service, clears the current table,
      * and populates it with the latest document information. Also configures the
      * column widths for optimal display of document data.
@@ -210,14 +210,14 @@ public class DocumentPanel extends JPanel {
         List<Document> documents = documentService.getAllDocuments();
         for (Document document : documents) {
             tableModel.addRow(new Object[]{
-                    document.getId(),
-                    document.getCse() != null ? document.getCse().getCaseNumber() : "",
-                    document.getTitle(),
-                    document.getType(),
-                    document.getContentType()
+                document.getId(),
+                document.getCse() != null ? document.getCse().getCaseNumber() : "",
+                document.getTitle(),
+                document.getType(),
+                document.getContentType()
             });
         }
-
+        
         // Adjust column widths
         if (documentTable.getWidth() > 0) {
             // Percentage widths for ID, Case No, Title, Type, Content Type
@@ -239,7 +239,7 @@ public class DocumentPanel extends JPanel {
 
     /**
      * Displays a dialog for adding a new document
-     *
+     * 
      * Creates and shows a modal dialog with form fields for entering
      * new document information, including selecting an associated case.
      * Validates input data before saving to ensure data integrity and
@@ -332,7 +332,7 @@ public class DocumentPanel extends JPanel {
 
     /**
      * Displays a dialog for editing an existing document
-     *
+     * 
      * Creates and shows a modal dialog with pre-populated form fields
      * for modifying the selected document's information. Validates the modified
      * data before saving and provides feedback on success or failure.
@@ -429,7 +429,7 @@ public class DocumentPanel extends JPanel {
 
     /**
      * Displays a confirmation dialog for deleting a document
-     *
+     * 
      * Creates and shows a modal confirmation dialog for the selected document.
      * If confirmed, removes the document from the system and updates the table.
      * Shows an error message if no document is selected or the document is not found.
@@ -470,7 +470,7 @@ public class DocumentPanel extends JPanel {
 
     /**
      * Searches for documents matching the search criteria
-     *
+     * 
      * Filters the document list based on the text entered in the search field.
      * Searches across multiple document attributes (title, type, content type,
      * and associated case number) and updates the table to show only matching documents.
@@ -490,21 +490,21 @@ public class DocumentPanel extends JPanel {
             String type = document.getType() != null ? document.getType().toString().toLowerCase() : "";
             String contentType = document.getContentType() != null ? document.getContentType().toLowerCase() : "";
             String caseNumber = document.getCse() != null ? document.getCse().getCaseNumber().toLowerCase() : "";
-
-            if (title.contains(searchTerm) ||
-                    type.contains(searchTerm) ||
-                    contentType.contains(searchTerm) ||
-                    caseNumber.contains(searchTerm)) {
+            
+            if (title.contains(searchTerm) || 
+                type.contains(searchTerm) || 
+                contentType.contains(searchTerm) || 
+                caseNumber.contains(searchTerm)) {
                 tableModel.addRow(new Object[]{
-                        document.getId(),
-                        document.getCse() != null ? document.getCse().getCaseNumber() : "",
-                        document.getTitle(),
-                        document.getType(),
-                        document.getContentType()
+                    document.getId(),
+                    document.getCse() != null ? document.getCse().getCaseNumber() : "",
+                    document.getTitle(),
+                    document.getType(),
+                    document.getContentType()
                 });
             }
         }
-
+        
         // Adjust column widths for search results too
         int[] columnWidths = {5, 20, 35, 20, 20};
         LegalTheme.setColumnWidths(documentTable, columnWidths);

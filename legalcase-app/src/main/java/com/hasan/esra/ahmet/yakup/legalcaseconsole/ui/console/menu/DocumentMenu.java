@@ -36,13 +36,13 @@ public class DocumentMenu {
      * @details Used to navigate between different menus in the application
      */
     private final ConsoleMenuManager consoleMenuManager;
-
+    
     /**
      * @brief Document service for document operations
      * @details Handles CRUD operations and business logic for legal documents
      */
     private final DocumentService documentService;
-
+    
     /**
      * @brief Case service for case operations
      * @details Used to retrieve case information when associating documents with cases

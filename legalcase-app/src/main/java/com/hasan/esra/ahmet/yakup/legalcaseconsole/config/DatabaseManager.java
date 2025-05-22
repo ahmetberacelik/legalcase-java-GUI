@@ -53,25 +53,25 @@ public class DatabaseManager {
     public static void initializeDatabase() throws Exception {
         // Set ORMLite logging level to WARNING to suppress INFO messages
         Logger.getLogger("com.j256.ormlite").setLevel(Level.WARNING);
-
+    
         // Get the absolute path of the database file
         File dbFile = new File("legalcase.db");
         DATABASE_URL = "jdbc:sqlite:" + dbFile.getAbsolutePath();
-
+    
         // Check if database file exists, if not, create it
         if (!dbFile.exists()) { if (!dbFile.createNewFile()) { throw new RuntimeException("Could not create database file");
+            }
         }
-        }
-
+    
         // Create a connection source to our database
         connectionSource = new JdbcConnectionSource(DATABASE_URL);
-
+    
         // Create tables if they don't already exist
         createTables();
-
+    
         LOGGER.info("Database initialized successfully");
     }
-
+    
 
     /**
      * @brief Create database tables for all model classes
@@ -81,7 +81,7 @@ public class DatabaseManager {
      */
     private static void createTables() throws SQLException {
         if (connectionSource == null) { throw new IllegalStateException("Connection source is null"); }
-
+        
         TableUtils.createTableIfNotExists(connectionSource, User.class);
         TableUtils.createTableIfNotExists(connectionSource, Client.class);
         TableUtils.createTableIfNotExists(connectionSource, Case.class);

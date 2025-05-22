@@ -128,9 +128,9 @@ public class HearingMenuTest {
         // Example hearing information and return to main menu (10)
         LocalDate hearingDate = LocalDate.now().plusDays(7);
         LocalTime hearingTime = LocalTime.of(10, 0);
-
+        
         UiConsoleHelper.setScanner(new Scanner("1\n" + testCase.getId() + "\n" + hearingDate.toString() + "\n" +
-                hearingTime.toString() + "\nJudge Name\nCourt Building\nTest notes\n\n10\n"));
+                                            hearingTime.toString() + "\nJudge Name\nCourt Building\nTest notes\n\n10\n"));
 
         // Action
         hearingMenu.display();
@@ -241,7 +241,7 @@ public class HearingMenuTest {
         Optional<Hearing> rescheduledHearingOpt = hearingService.getHearingById(hearing.getId());
         assertTrue("Hearing should be found", rescheduledHearingOpt.isPresent());
         Hearing rescheduledHearing = rescheduledHearingOpt.get();
-
+        
         // Date and time check - Year, month, day, hour and minute check
         LocalDateTime expectedDateTime = LocalDateTime.of(newDate, newTime);
         assertEquals("Hearing date should be updated - Year", expectedDateTime.getYear(), rescheduledHearing.getHearingDate().getYear());
@@ -249,10 +249,10 @@ public class HearingMenuTest {
         assertEquals("Hearing date should be updated - Day", expectedDateTime.getDayOfMonth(), rescheduledHearing.getHearingDate().getDayOfMonth());
         assertEquals("Hearing time should be updated - Hour", expectedDateTime.getHour(), rescheduledHearing.getHearingDate().getHour());
         assertEquals("Hearing time should be updated - Minute", expectedDateTime.getMinute(), rescheduledHearing.getHearingDate().getMinute());
-
+        
         // Hearing status check
         assertEquals("Hearing status should be SCHEDULED", HearingStatus.SCHEDULED, rescheduledHearing.getStatus());
-
+        
         // Notes check - Rescheduling note should be added
         assertTrue("Hearing notes should contain rescheduling information", rescheduledHearing.getNotes().contains("Hearing rescheduled from"));
     }
@@ -333,7 +333,7 @@ public class HearingMenuTest {
         // Verification - Was the hearing not deleted?
         Optional<Hearing> hearingOpt = hearingService.getHearingById(hearing.getId());
         assertTrue("Hearing should not be deleted", hearingOpt.isPresent());
-
+        
         // Is there a cancellation message in the output?
         String output = outContent.toString();
         assertTrue("Output should contain 'Operation cancelled' message", output.contains("Operation cancelled"));
@@ -345,10 +345,10 @@ public class HearingMenuTest {
         LocalDateTime pastDate = LocalDateTime.now().minusDays(7);
         LocalDateTime futureDate1 = LocalDateTime.now().plusDays(3);
         LocalDateTime futureDate2 = LocalDateTime.now().plusDays(7);
-
+        
         // Past hearing
         hearingService.createHearing(testCase.getId(), pastDate, "Past Judge", "Past Location", "Past Notes");
-
+        
         // Future hearings
         Hearing future1 = hearingService.createHearing(testCase.getId(), futureDate1, "Future Judge 1", "Future Location 1", "Future Notes 1");
         Hearing future2 = hearingService.createHearing(testCase.getId(), futureDate2, "Future Judge 2", "Future Location 2", "Future Notes 2");
@@ -370,7 +370,7 @@ public class HearingMenuTest {
         // Add several hearings
         LocalDateTime date1 = LocalDateTime.now().plusDays(3);
         LocalDateTime date2 = LocalDateTime.now().plusDays(7);
-
+        
         Hearing hearing1 = hearingService.createHearing(testCase.getId(), date1, "Judge 1", "Location 1", "Notes 1");
         Hearing hearing2 = hearingService.createHearing(testCase.getId(), date2, "Judge 2", "Location 2", "Notes 2");
 
@@ -392,7 +392,7 @@ public class HearingMenuTest {
         LocalDateTime date1 = LocalDateTime.now().plusDays(3); // Within date range
         LocalDateTime date2 = LocalDateTime.now().plusDays(7); // Within date range
         LocalDateTime date3 = LocalDateTime.now().plusDays(15); // Outside date range
-
+        
         Hearing hearing1 = hearingService.createHearing(testCase.getId(), date1, "Judge 1", "Location 1", "Notes 1");
         Hearing hearing2 = hearingService.createHearing(testCase.getId(), date2, "Judge 2", "Location 2", "Notes 2");
         Hearing hearing3 = hearingService.createHearing(testCase.getId(), date3, "Judge 3", "Location 3", "Notes 3");

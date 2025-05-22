@@ -38,13 +38,13 @@ public class HearingMenu {
      * @details Used to navigate between different menus in the application
      */
     private final ConsoleMenuManager consoleMenuManager;
-
+    
     /**
      * @brief Hearing service for hearing operations
      * @details Handles CRUD operations and business logic for court hearings
      */
     private final HearingService hearingService;
-
+    
     /**
      * @brief Case service for case operations
      * @details Used to retrieve case information when associating hearings with cases

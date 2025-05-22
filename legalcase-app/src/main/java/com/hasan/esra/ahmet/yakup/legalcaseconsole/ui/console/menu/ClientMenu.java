@@ -31,7 +31,7 @@ public class ClientMenu {
      * @details Used to navigate between different menus in the application
      */
     private final ConsoleMenuManager consoleMenuManager;
-
+    
     /**
      * @brief Client service for client operations
      * @details Handles CRUD operations and business logic for clients

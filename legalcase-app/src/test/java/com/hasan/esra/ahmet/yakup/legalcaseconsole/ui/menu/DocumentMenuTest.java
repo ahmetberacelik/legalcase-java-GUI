@@ -335,7 +335,7 @@ public class DocumentMenuTest {
         String caseTitle1 = "Test Case 1";
         Case testCase1 = caseService.createCase(caseNumber1, caseTitle1, CaseType.CIVIL, "Test case 1 description");
         Document doc1 = documentService.createDocument(testCase1.getId(), "Case 1 Document", DocumentType.CONTRACT, "This is a document for case 1");
-
+        
         String caseNumber2 = "DOC2023-002";
         String caseTitle2 = "Test Case 2";
         Case testCase2 = caseService.createCase(caseNumber2, caseTitle2, CaseType.CRIMINAL, "Test case 2 description");
