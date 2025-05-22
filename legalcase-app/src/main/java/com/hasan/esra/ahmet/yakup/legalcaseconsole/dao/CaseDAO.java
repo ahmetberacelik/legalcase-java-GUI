@@ -141,32 +141,29 @@ public class CaseDAO {
     /**
      * @brief Update case
      * @param caseEntity Case to update
-     * @return Number of rows updated (should be 1 for success)
      * @throws SQLException if update fails
      */
-    public int update(Case caseEntity) throws SQLException {
+    public void update(Case caseEntity) throws SQLException {
         caseEntity.preUpdate();
-        return caseDao.update(caseEntity);
+        caseDao.update(caseEntity);
     }
 
     /**
      * @brief Delete case
      * @param caseEntity Case to delete
-     * @return Number of rows deleted (should be 1 for success)
      * @throws SQLException if deletion fails
      */
-    public int delete(Case caseEntity) throws SQLException {
-        return caseDao.delete(caseEntity);
+    public void delete(Case caseEntity) throws SQLException {
+        caseDao.delete(caseEntity);
     }
 
     /**
      * @brief Delete case by ID
      * @param id ID of case to delete
-     * @return Number of rows deleted (should be 1 for success)
      * @throws SQLException if deletion fails
      */
-    public int deleteById(Long id) throws SQLException {
-        return caseDao.deleteById(id);
+    public void deleteById(Long id) throws SQLException {
+        caseDao.deleteById(id);
     }
 
     /**
