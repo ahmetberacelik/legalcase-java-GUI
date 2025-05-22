@@ -16,7 +16,7 @@ import java.sql.SQLException;
  */
 public class TestDatabaseManager {
     /** In-memory database URL for tests */
-    private static final String TEST_DB_URL = "jdbc:sqlite:memory:testdb";
+    private static final String TEST_DB_URL = "jdbc:sqlite::memory:";
     /** Shared connection source instance */
     private static ConnectionSource connectionSource;
 
@@ -54,10 +54,7 @@ public class TestDatabaseManager {
         TableUtils.createTableIfNotExists(cs, Client.class);
         TableUtils.createTableIfNotExists(cs, Case.class);
         TableUtils.createTableIfNotExists(cs, CaseClient.class);
-
-        TableUtils.dropTable(cs, Hearing.class, true);
         TableUtils.createTableIfNotExists(cs, Hearing.class);
-
         TableUtils.createTableIfNotExists(cs, Document.class);
         TableUtils.createTableIfNotExists(cs, User.class);
     }
