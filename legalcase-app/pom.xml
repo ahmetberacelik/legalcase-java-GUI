@@ -99,9 +99,9 @@
     </distributionManagement>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <java.version>17</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>21</java.version>
     </properties>
 
     <dependencies>
@@ -118,6 +118,22 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- AssertJ Swing - JUnit 4 entegrasyonu -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing-junit</artifactId>
+            <version>3.17.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito - Test için -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- SQLite JDBC Driver -->
         <dependency>
             <groupId>org.xerial</groupId>
@@ -159,16 +175,16 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version> <!-- Update from 0.8.7 to the latest version -->
+                <version>0.8.11</version>
                 <executions>
                     <execution>
+                        <id>default-prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>report</id>
-                        <phase>test</phase>
+                        <id>default-report</id>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -181,8 +197,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <release>21</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -200,15 +215,6 @@
                 <configuration>
                     <port>9000</port>
                     <tempWebappDirectory>${basedir}/target/site</tempWebappDirectory>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <mainClass>com.hasan.esra.ahmet.yakup.legalcaseconsole.LegalcaseApp</mainClass>
                 </configuration>
             </plugin>
 
@@ -233,6 +239,16 @@
                                     </mainClass>
                                 </transformer>
                             </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
@@ -261,6 +277,9 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.1</version>
+                    <configuration>
+                        <argLine>${argLine} -Dorg.slf4j.simpleLogger.logFile=System.out -Dorg.slf4j.simpleLogger.defaultLogLevel=warn</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
@@ -296,6 +315,7 @@
             </activation>
             <build>
                 <plugins>
+                    
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -327,6 +347,18 @@
                                 <include>**/ClientDAOTest.java</include>
                                 <include>**/DocumentDAOTest.java</include>
                                 <include>**/HearingDAOTest.java</include>
+                                <include>**/UiConsoleHelperTest.java</include>
+                                <include>**/ConsoleMenuManagerTest.java</include>
+                                <include>**/MainFrameTest.java</include>
+                                <include>**/LegalThemeTest.java</include>
+                                <include>**/MainMenuPanelTest.java</include>
+                                <include>**/CasePanelTest.java</include>
+                                <include>**/AuthPanelTest.java</include>
+                                <include>**/HearingPanelTest.java</include>
+                                <include>**/ClientPanelTest.java</include>
+                                <include>**/DocumentPanelTest.java</include>
+                                <include>**/LoginPanelTest.java</include>
+								<include>**/CasePanelTest.java</include>								
                             </includes>
                             <forkCount>1</forkCount>
                             <reuseForks>false</reuseForks>
@@ -375,6 +407,16 @@
                                 <include>**/HearingMenuTest.java</include>
                                 <include>**/DocumentMenuTest.java</include>
                                 <include>**/ClientMenuTest.java</include>
+                                <include>**/UiConsoleHelperTest.java</include>
+                                <include>**/ConsoleMenuManagerTest.java</include>
+                                <include>**/MainFrameTest.java</include>
+                                <include>**/LegalThemeTest.java</include>
+                                <include>**/MainMenuPanelTest.java</include>
+                                <include>**/CasePanelTest.java</include>
+                                <include>**/AuthPanelTest.java</include>
+                                <include>**/HearingPanelTest.java</include>
+                                <include>**/ClientPanelTest.java</include>
+                                <include>**/DocumentPanelTest.java</include>
                             </includes>
                             <forkCount>1</forkCount>
                             <reuseForks>false</reuseForks>
