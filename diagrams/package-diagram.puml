@@ -1,0 +1,69 @@
+@startuml Package Diagram
+
+package "com.hasan.esra.ahmet.yakup.legalcaseconsole" {
+  package "model" {
+    package "enums" {
+      class CaseStatus
+      class CaseType
+      class DocumentType
+      class HearingStatus
+      class UserRole
+    }
+    
+    class BaseEntity
+    class User
+    class Case
+    class Client
+    class CaseClient
+    class Document
+    class Hearing
+  }
+  
+  package "dao" {
+    class UserDAO
+    class CaseDAO
+    class ClientDAO
+    class DocumentDAO
+    class HearingDAO
+  }
+  
+  package "service" {
+    class AuthService
+    class CaseService
+    class ClientService
+    class DocumentService
+    class HearingService
+  }
+  
+  package "ui" {
+    class ConsoleHelper
+    class MenuManager
+    
+    package "menu" {
+      class AuthMenu
+      class MainMenu
+      class CaseMenu
+      class ClientMenu
+      class DocumentMenu
+      class HearingMenu
+    }
+  }
+  
+  package "config" {
+    class DatabaseConfig
+  }
+  
+  class LegalcaseApp
+}
+
+' Package dependencies
+ui ..> service : uses
+service ..> dao : uses
+dao ..> model : uses
+ui ..> model : uses
+service ..> model : uses
+LegalcaseApp ..> ui : uses
+LegalcaseApp ..> config : uses
+dao ..> config : uses
+
+@enduml

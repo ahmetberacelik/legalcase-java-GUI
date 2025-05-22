@@ -16,9 +16,6 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.*;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -30,16 +27,20 @@ import java.time.ZoneOffset;
  * location, judge, and status.
  */
 @DatabaseTable(tableName = "hearings")
-@Getter
-@Setter
-@NoArgsConstructor
 public class Hearing extends BaseEntity {
+
+    /**
+     * @brief Explicit no-arg constructor required by ORMLite
+     */
+    public Hearing() {
+        super();
+    }
 
     /**
      * @brief Reference to the associated case
      * @details Foreign key relationship to the Case entity
      */
-    @DatabaseField(foreign = true, columnName = "case_id", canBeNull = false)
+    @DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "case_id", canBeNull = false)
     private Case cse;
 
     /**
@@ -111,6 +112,95 @@ public class Hearing extends BaseEntity {
         this.judge = judge;
         this.location = location;
         this.status = HearingStatus.SCHEDULED;
+    }
+
+    /**
+     * @brief Gets the ID of this hearing
+     * @return The unique identifier for this hearing
+     */
+    @Override
+    public Long getId() {
+        return super.getId();
+    }
+
+    /**
+     * @brief Get the associated case
+     * @return The Case entity
+     */
+    public Case getCse() {
+        return cse;
+    }
+
+    /**
+     * @brief Set the associated case
+     * @param cse The Case entity to set
+     */
+    public void setCse(Case cse) {
+        this.cse = cse;
+    }
+
+    /**
+     * @brief Get the judge name
+     * @return The name of the presiding judge
+     */
+    public String getJudge() {
+        return judge;
+    }
+
+    /**
+     * @brief Set the judge name
+     * @param judge The judge name to set
+     */
+    public void setJudge(String judge) {
+        this.judge = judge;
+    }
+
+    /**
+     * @brief Get the hearing status
+     * @return The current status of the hearing
+     */
+    public HearingStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * @brief Set the hearing status
+     * @param status The status to set
+     */
+    public void setStatus(HearingStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * @brief Get the hearing location
+     * @return The location where the hearing will take place
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * @brief Set the hearing location
+     * @param location The location to set
+     */
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    /**
+     * @brief Get the hearing notes
+     * @return Additional notes about the hearing
+     */
+    public String getNotes() {
+        return notes;
+    }
+
+    /**
+     * @brief Set the hearing notes
+     * @param notes The notes to set
+     */
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     /**

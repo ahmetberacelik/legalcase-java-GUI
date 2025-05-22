@@ -34,23 +34,15 @@ public class DatabaseManager {
     private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
 
     /**
-     * @brief JDBC URL for the SQLite database
-     */
-    private static final String DATABASE_URL = "jdbc:sqlite:legalcase.db";
-
-    /**
      * @brief Shared database connection source
      * @details Singleton instance that provides database connectivity to DAOs
      */
     private static ConnectionSource connectionSource = null;
 
     /**
-     * @brief Private constructor to prevent instantiation
-     * @details Enforces the singleton pattern for this utility class
+     * @brief JDBC URL for the SQLite database
      */
-    private DatabaseManager() {
-        // Private constructor to prevent instantiation
-    }
+    private static String DATABASE_URL = null;
 
     /**
      * @brief Initialize the database connection and create tables if they don't exist
@@ -58,26 +50,28 @@ public class DatabaseManager {
      * and ensures all required tables are available in the schema
      * @throws RuntimeException if database initialization fails
      */
-    public static void initializeDatabase() {
-        try {
-            // Check if database file exists, if not, create it
-            File dbFile = new File("legalcase.db");
-            if (!dbFile.exists()) {
-                LOGGER.info("Database file not found. Creating new database.");
-            }
+    public static void initializeDatabase() throws Exception {
+        // Set ORMLite logging level to WARNING to suppress INFO messages
+        Logger.getLogger("com.j256.ormlite").setLevel(Level.WARNING);
 
-            // Create a connection source to our database
-            connectionSource = new JdbcConnectionSource(DATABASE_URL);
+        // Get the absolute path of the database file
+        File dbFile = new File("legalcase.db");
+        DATABASE_URL = "jdbc:sqlite:" + dbFile.getAbsolutePath();
 
-            // Create tables if they don't already exist
-            createTables();
-
-            LOGGER.info("Database initialized successfully.");
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Could not initialize database", e);
-            throw new RuntimeException("Failed to initialize database", e);
+        // Check if database file exists, if not, create it
+        if (!dbFile.exists()) { if (!dbFile.createNewFile()) { throw new RuntimeException("Could not create database file");
         }
+        }
+
+        // Create a connection source to our database
+        connectionSource = new JdbcConnectionSource(DATABASE_URL);
+
+        // Create tables if they don't already exist
+        createTables();
+
+        LOGGER.info("Database initialized successfully");
     }
+
 
     /**
      * @brief Create database tables for all model classes
@@ -86,14 +80,14 @@ public class DatabaseManager {
      * @throws SQLException if table creation fails
      */
     private static void createTables() throws SQLException {
+        if (connectionSource == null) { throw new IllegalStateException("Connection source is null"); }
+
         TableUtils.createTableIfNotExists(connectionSource, User.class);
         TableUtils.createTableIfNotExists(connectionSource, Client.class);
         TableUtils.createTableIfNotExists(connectionSource, Case.class);
         TableUtils.createTableIfNotExists(connectionSource, Hearing.class);
         TableUtils.createTableIfNotExists(connectionSource, Document.class);
         TableUtils.createTableIfNotExists(connectionSource, CaseClient.class);
-
-        LOGGER.info("Database tables created successfully.");
     }
 
     /**
@@ -102,24 +96,8 @@ public class DatabaseManager {
      * @return ConnectionSource object for database access
      */
     public static ConnectionSource getConnectionSource() {
-        if (connectionSource == null) {
-            initializeDatabase();
-        }
+        if (connectionSource == null) { throw new IllegalStateException("Database not initialized. Call initializeDatabase() first.");}
         return connectionSource;
     }
 
-    /**
-     * @brief Close the database connection
-     * @details Safely releases database resources and logs the outcome
-     */
-    public static void closeConnection() {
-        if (connectionSource != null) {
-            try {
-                connectionSource.close();
-                LOGGER.info("Database connection closed successfully.");
-            } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Error closing database connection", e);
-            }
-        }
-    }
 }

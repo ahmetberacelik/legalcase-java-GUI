@@ -14,9 +14,6 @@ package com.hasan.esra.ahmet.yakup.legalcaseconsole.model;
 import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.*;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @brief Document entity representing legal documents
@@ -24,10 +21,14 @@ import lombok.Setter;
  * can be attached to cases and contain content of various types.
  */
 @DatabaseTable(tableName = "documents")
-@Getter
-@Setter
-@NoArgsConstructor
 public class Document extends BaseEntity {
+
+    /**
+     * @brief Explicit no-arg constructor required by ORMLite
+     */
+    public Document() {
+        super();
+    }
 
     /**
      * @brief Title of the document
@@ -47,7 +48,7 @@ public class Document extends BaseEntity {
      * @brief Reference to the associated case
      * @details Foreign key relationship to the Case entity
      */
-    @DatabaseField(foreign = true, columnName = "case_id")
+    @DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "case_id", canBeNull = false)
     private Case cse;
 
     /**
@@ -89,6 +90,86 @@ public class Document extends BaseEntity {
         this.cse = cse;
         this.content = content;
         this.contentType = "text/plain";
+    }
+
+    /**
+     * @brief Get the title of the document
+     * @return The document title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * @brief Set the title of the document
+     * @param title The title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @brief Get the type of the document
+     * @return The document type
+     */
+    public DocumentType getType() {
+        return type;
+    }
+
+    /**
+     * @brief Set the type of the document
+     * @param type The document type to set
+     */
+    public void setType(DocumentType type) {
+        this.type = type;
+    }
+
+    /**
+     * @brief Get the associated case
+     * @return The Case entity
+     */
+    public Case getCse() {
+        return cse;
+    }
+
+    /**
+     * @brief Set the associated case
+     * @param cse The Case entity to set
+     */
+    public void setCse(Case cse) {
+        this.cse = cse;
+    }
+
+    /**
+     * @brief Get the content type
+     * @return The MIME type
+     */
+    public String getContentType() {
+        return contentType;
+    }
+
+    /**
+     * @brief Set the content type
+     * @param contentType The MIME type to set
+     */
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    /**
+     * @brief Get the document content
+     * @return The textual content
+     */
+    public String getContent() {
+        return content;
+    }
+
+    /**
+     * @brief Set the document content
+     * @param content The content to set
+     */
+    public void setContent(String content) {
+        this.content = content;
     }
 
     /**

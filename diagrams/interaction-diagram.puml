@@ -1,0 +1,64 @@
+@startuml UML Interaction Diagram
+
+' Define participants
+participant "User" as User
+participant "AuthMenu" as AuthMenu
+participant "MainMenu" as MainMenu
+participant "CaseMenu" as CaseMenu
+participant "AuthService" as AuthService
+participant "CaseService" as CaseService
+participant "UserDAO" as UserDAO
+participant "CaseDAO" as CaseDAO
+participant "Database" as DB
+
+' Define the interaction
+group Authentication
+    User -> AuthMenu : Select Login Option
+    activate AuthMenu
+    AuthMenu -> AuthService : login(username, password)
+    activate AuthService
+    AuthService -> UserDAO : authenticate(username, password)
+    activate UserDAO
+    UserDAO -> DB : Query user
+    activate DB
+    DB --> UserDAO : User record
+    deactivate DB
+    UserDAO --> AuthService : Optional<User>
+    deactivate UserDAO
+    AuthService --> AuthMenu : Authentication result
+    deactivate AuthService
+    
+    alt Authentication successful
+        AuthMenu -> MainMenu : navigateToMainMenu()
+        activate MainMenu
+        MainMenu --> User : Display main menu options
+    else Authentication failed
+        AuthMenu --> User : Display error message
+    end
+    deactivate AuthMenu
+end
+
+group Case Management
+    User -> MainMenu : Select Case Management
+    MainMenu -> CaseMenu : navigateToCaseMenu()
+    activate CaseMenu
+    CaseMenu --> User : Display case menu options
+    
+    User -> CaseMenu : Select Create Case
+    CaseMenu -> CaseService : createCase(details)
+    activate CaseService
+    CaseService -> CaseDAO : create(case)
+    activate CaseDAO
+    CaseDAO -> DB : Insert case
+    activate DB
+    DB --> CaseDAO : Confirmation
+    deactivate DB
+    CaseDAO --> CaseService : Case
+    deactivate CaseDAO
+    CaseService --> CaseMenu : Case
+    deactivate CaseService
+    CaseMenu --> User : Display success message
+    deactivate CaseMenu
+end
+
+@enduml

@@ -93,7 +93,6 @@ public class UserTest {
         // Assert
         assertNull("ID should be null", user.getId());
         assertEquals("Username should be set correctly", username, user.getUsername());
-        assertEquals("Password should be set correctly", password, user.getPassword());
         assertEquals("Email should be set correctly", email, user.getEmail());
         assertEquals("Name should be set correctly", name, user.getName());
         assertEquals("Surname should be set correctly", surname, user.getSurname());

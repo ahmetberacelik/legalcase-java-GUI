@@ -14,8 +14,6 @@ package com.hasan.esra.ahmet.yakup.legalcaseconsole.model;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -24,8 +22,6 @@ import java.time.LocalDateTime;
  * @details This abstract class implements common properties and methods
  * that all entity classes in the system inherit.
  */
-@Getter
-@Setter
 public abstract class BaseEntity {
     /**
      * @brief Unique identifier for the entity
@@ -65,6 +61,54 @@ public abstract class BaseEntity {
     public BaseEntity(Long id) {
         this();
         this.id = id;
+    }
+
+    /**
+     * @brief Get the unique identifier
+     * @return The entity's ID
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @brief Set the unique identifier
+     * @param id The ID to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    /**
+     * @brief Get the creation timestamp
+     * @return When the entity was created
+     */
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * @brief Set the creation timestamp
+     * @param createdAt The timestamp to set
+     */
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * @brief Get the last update timestamp
+     * @return When the entity was last updated
+     */
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    /**
+     * @brief Set the last update timestamp
+     * @param updatedAt The timestamp to set
+     */
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     /**

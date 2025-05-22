@@ -1,0 +1,71 @@
+@startuml Composite Structure Diagram
+
+package "LegalCaseManagementSystem" {
+  component "userInterface" as ui
+  component "businessLogic" as bl
+  component "dataAccess" as da
+  component "database" as db
+  
+  ' Internal connections
+  ui -- bl : uses
+  bl -- da : uses
+  da -- db : uses
+}
+
+' User Interface component details
+package "userInterface" {
+  component "MenuSystem" as menuSystem {
+    component "AuthMenu" as authMenu
+    component "MainMenu" as mainMenu
+    component "CaseMenu" as caseMenu
+    component "ClientMenu" as clientMenu
+    component "DocumentMenu" as docMenu
+    component "HearingMenu" as hearingMenu
+    
+    ' Menu connections
+    authMenu -- mainMenu : navigates to
+    mainMenu -- caseMenu : navigates to
+    mainMenu -- clientMenu : navigates to
+    mainMenu -- docMenu : navigates to
+    mainMenu -- hearingMenu : navigates to
+  }
+  
+  component "ConsoleHelper" as consoleHelper
+  
+  ' Connect menu system to console helper
+  menuSystem -- consoleHelper : uses
+}
+
+' Business Logic component details
+package "businessLogic" {
+  component "AuthService" as authService
+  component "CaseService" as caseService
+  component "ClientService" as clientService
+  component "DocumentService" as docService
+  component "HearingService" as hearingService
+}
+
+' Data Access component details
+package "dataAccess" {
+  component "UserDAO" as userDAO
+  component "CaseDAO" as caseDAO
+  component "ClientDAO" as clientDAO
+  component "DocumentDAO" as docDAO
+  component "HearingDAO" as hearingDAO
+}
+
+' Connect the main components
+authMenu -- authService : uses
+mainMenu -- authService : uses
+caseMenu -- caseService : uses
+clientMenu -- clientService : uses
+docMenu -- docService : uses
+hearingMenu -- hearingService : uses
+
+authService -- userDAO : uses
+caseService -- caseDAO : uses
+clientService -- clientDAO : uses
+docService -- docDAO : uses
+hearingService -- hearingDAO : uses
+
+@enduml

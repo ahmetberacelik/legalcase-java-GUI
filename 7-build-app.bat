@@ -22,7 +22,7 @@ echo Change directory to legalcase-app
 cd legalcase-app
 
 echo Perform Maven clean, test, and packaging
-call mvn clean test package
+call mvn clean verify
 
 echo Return to the previous directory
 cd ..

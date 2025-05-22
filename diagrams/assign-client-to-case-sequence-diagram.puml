@@ -1,0 +1,47 @@
+@startuml Assign Client to Case Process - Sequence Diagram
+
+actor User
+boundary "CaseMenu" as CaseMenu
+control "CaseService" as CaseService
+control "ClientService" as ClientService
+entity "CaseDAO" as CaseDAO
+entity "ClientDAO" as ClientDAO
+database "Database" as DB
+
+User -> CaseMenu: Select Assign Client Option
+CaseMenu -> CaseMenu: assignClientToCase()
+CaseMenu -> ConsoleHelper: readLong("Enter case ID:")
+ConsoleHelper --> CaseMenu: caseId
+CaseMenu -> CaseService: getCaseById(caseId)
+CaseService -> CaseDAO: getById(caseId)
+CaseDAO -> DB: Query case by ID
+DB --> CaseDAO: Optional<Case>
+CaseDAO --> CaseService: Optional<Case>
+CaseService --> CaseMenu: Optional<Case>
+CaseMenu -> CaseMenu: Check if case exists
+CaseMenu -> ClientService: getAllClients()
+ClientService -> ClientDAO: getAll()
+ClientDAO -> DB: Query all clients
+DB --> ClientDAO: List<Client>
+ClientDAO --> ClientService: List<Client>
+ClientService --> CaseMenu: List<Client>
+CaseMenu -> ConsoleHelper: Display list of clients
+CaseMenu -> ConsoleHelper: readLong("Enter client ID:")
+ConsoleHelper --> CaseMenu: clientId
+CaseMenu -> ClientService: getClientById(clientId)
+ClientService -> ClientDAO: getById(clientId)
+ClientDAO -> DB: Query client by ID
+DB --> ClientDAO: Optional<Client>
+ClientDAO --> ClientService: Optional<Client>
+ClientService --> CaseMenu: Optional<Client>
+CaseMenu -> CaseMenu: Check if client exists
+CaseMenu -> CaseService: assignClientToCase(caseId, clientId)
+CaseService -> CaseDAO: assignClientToCase(caseId, clientId)
+CaseDAO -> DB: Insert case-client relationship
+DB --> CaseDAO: Success
+CaseDAO --> CaseService: Success
+CaseService --> CaseMenu: Success
+CaseMenu -> ConsoleHelper: displaySuccess("Client assigned to case successfully")
+CaseMenu --> User: Show success message
+
+@enduml
