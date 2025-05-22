@@ -1,0 +1,43 @@
+@startuml Schedule Hearing Process - Sequence Diagram
+
+actor User
+boundary "HearingMenu" as HearingMenu
+control "HearingService" as HearingService
+control "CaseService" as CaseService
+entity "HearingDAO" as HearingDAO
+entity "CaseDAO" as CaseDAO
+database "Database" as DB
+
+User -> HearingMenu: Select Schedule Hearing Option
+HearingMenu -> HearingMenu: scheduleHearing()
+HearingMenu -> ConsoleHelper: readLong("Enter case ID:")
+ConsoleHelper --> HearingMenu: caseId
+HearingMenu -> CaseService: getCaseById(caseId)
+CaseService -> CaseDAO: getById(caseId)
+CaseDAO -> DB: Query case by ID
+DB --> CaseDAO: Optional<Case>
+CaseDAO --> CaseService: Optional<Case>
+CaseService --> HearingMenu: Optional<Case>
+HearingMenu -> HearingMenu: Check if case exists
+HearingMenu -> ConsoleHelper: readString("Enter hearing date (yyyy-MM-dd):")
+ConsoleHelper --> HearingMenu: dateStr
+HearingMenu -> HearingMenu: Parse date
+HearingMenu -> ConsoleHelper: readString("Enter hearing time (HH:mm):")
+ConsoleHelper --> HearingMenu: timeStr
+HearingMenu -> HearingMenu: Parse time
+HearingMenu -> ConsoleHelper: readString("Enter location:")
+ConsoleHelper --> HearingMenu: location
+HearingMenu -> ConsoleHelper: readString("Enter judge name:")
+ConsoleHelper --> HearingMenu: judgeName
+HearingMenu -> ConsoleHelper: readString("Enter notes:")
+ConsoleHelper --> HearingMenu: notes
+HearingMenu -> HearingService: scheduleHearing(caseId, date, time, location, judgeName, notes)
+HearingService -> HearingDAO: create(hearing)
+HearingDAO -> DB: Insert new hearing
+DB --> HearingDAO: Created hearing
+HearingDAO --> HearingService: Hearing
+HearingService --> HearingMenu: Hearing
+HearingMenu -> ConsoleHelper: displaySuccess("Hearing scheduled successfully")
+HearingMenu --> User: Show success message
+
+@enduml

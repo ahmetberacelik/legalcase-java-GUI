@@ -16,7 +16,6 @@ import com.hasan.esra.ahmet.yakup.legalcaseconsole.model.enums.UserRole;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -28,8 +27,14 @@ import lombok.Setter;
 @DatabaseTable(tableName = "users")
 @Getter
 @Setter
-@NoArgsConstructor
 public class User extends BaseEntity {
+
+    /**
+     * @brief Default constructor required by ORMLite
+     */
+    public User() {
+        // Default constructor required by ORMLite
+    }
 
     /**
      * @brief Unique login name for the user

@@ -1,0 +1,36 @@
+@startuml Upload Document Process - Sequence Diagram
+
+actor User
+boundary "DocumentMenu" as DocumentMenu
+control "DocumentService" as DocumentService
+entity "DocumentDAO" as DocumentDAO
+entity "CaseDAO" as CaseDAO
+database "Database" as DB
+
+User -> DocumentMenu: Select Upload Document Option
+DocumentMenu -> DocumentMenu: uploadDocument()
+DocumentMenu -> ConsoleHelper: readLong("Enter case ID:")
+ConsoleHelper --> DocumentMenu: caseId
+DocumentMenu -> DocumentService: getCaseById(caseId)
+DocumentService -> CaseDAO: getById(caseId)
+CaseDAO -> DB: Query case by ID
+DB --> CaseDAO: Optional<Case>
+CaseDAO --> DocumentService: Optional<Case>
+DocumentService --> DocumentMenu: Optional<Case>
+DocumentMenu -> DocumentMenu: Check if case exists
+DocumentMenu -> ConsoleHelper: readString("Enter document title:")
+ConsoleHelper --> DocumentMenu: title
+DocumentMenu -> ConsoleHelper: readString("Enter document type:")
+ConsoleHelper --> DocumentMenu: type
+DocumentMenu -> ConsoleHelper: readString("Enter file path:")
+ConsoleHelper --> DocumentMenu: filePath
+DocumentMenu -> DocumentService: uploadDocument(caseId, title, type, filePath)
+DocumentService -> DocumentDAO: create(document)
+DocumentDAO -> DB: Insert new document
+DB --> DocumentDAO: Created document
+DocumentDAO --> DocumentService: Document
+DocumentService --> DocumentMenu: Document
+DocumentMenu -> ConsoleHelper: displaySuccess("Document uploaded successfully")
+DocumentMenu --> User: Show success message
+
+@enduml
